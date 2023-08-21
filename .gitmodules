@@ -4,4 +4,4 @@
 	branch = develop2
 [submodule "vendor/enet"]
 	path = vendor/enet
-	url = https://github.com/ZTzTopia/enet
+	url = https://github.com/badewen/gt-enet.git

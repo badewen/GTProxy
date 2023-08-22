@@ -39,7 +39,7 @@ void Client::start()
 
     spdlog::info("Connecting to Growtopia server ({}:{}).", m_redirect_server.m_host, m_redirect_server.m_port);
 
-    if (!connect(m_redirect_server.m_host, m_redirect_server.m_port, m_peer.m_client_connect_id)) {
+    if (!connect(m_redirect_server.m_host, m_redirect_server.m_port)) {
         spdlog::error("Failed connect to Growtopia server.");
         return;
     }
@@ -53,8 +53,6 @@ void Client::start()
 void Client::on_connect(ENetPeer* peer)
 {
     spdlog::info("Connected to Growtopia server.");
-
-    m_peer.m_client_connect_id = peer->connectID;
 
     m_peer.m_gt_server = new player::Peer{ peer };
     m_server->set_gt_server_peer(m_peer.m_gt_server);

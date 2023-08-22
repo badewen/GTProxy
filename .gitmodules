@@ -5,4 +5,3 @@
 [submodule "vendor/enet"]
 	path = vendor/enet
 	url = https://github.com/badewen/gt-enet.git
-	branch = master

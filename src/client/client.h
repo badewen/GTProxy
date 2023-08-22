@@ -35,7 +35,6 @@ private:
     struct {
         player::Peer* m_gt_server;
         player::Peer* m_gt_client;
-        enet_uint32 m_client_connect_id;
     } m_peer;
 
     struct {

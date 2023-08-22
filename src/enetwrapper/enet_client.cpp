@@ -48,7 +48,7 @@ void ENetClient::destroy_host()
     }
 }
 
-bool ENetClient::connect(const std::string& host, enet_uint16 port, enet_uint32 connect_id)
+bool ENetClient::connect(const std::string& host, enet_uint16 port)
 {
     if (!m_host) {
         return false;
@@ -58,7 +58,7 @@ bool ENetClient::connect(const std::string& host, enet_uint16 port, enet_uint32 
     enet_address_set_host(&address, host.c_str());
     address.port = port;
 
-    m_peer = enet_host_connect(m_host, &address, 2, 0, connect_id);
+    m_peer = enet_host_connect(m_host, &address, 2, 0);
     if (!m_peer) {
         return false;
     }

@@ -75,6 +75,14 @@ public:
         return false;
     }
 
+    template <typename... Args>
+    void invoke_all(Args... args)
+    {
+        for (auto& k : m_events) {
+            invoke(k.first, std::forward<Args>(args)...);
+        }
+    }
+
 private:
     using listener = std::vector<std::pair<std::function<void()>, bool>>;
     std::unordered_map<std::string, listener> m_events;

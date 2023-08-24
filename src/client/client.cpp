@@ -5,6 +5,7 @@
 #include "../server/server.h"
 #include "../utils/hash.h"
 #include "../utils/text_parse.h"
+#include "../eventmanager/event_manager.h"
 
 namespace client {
 Client::Client(Config* config, server::Http* http, server::Server* server)
@@ -200,6 +201,18 @@ bool Client::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket
 
             break;
         }
+
+        case player::PACKET_SEND_MAP_DATA: {
+            std::uint8_t* raw_world_data{ player::get_extended_data(game_update_packet) };
+            if (!raw_world_data) {
+                break;
+            }
+            std::vector<std::uint8_t> raw_world_data_vector{ raw_world_data, raw_world_data + game_update_packet->data_size };
+
+            event_manager::InvokeOnWorldEnter(raw_world_data_vector);
+
+        }
+
         default:
             break;
     }

@@ -8,6 +8,8 @@
 #include "../utils/hash.h"
 #include "../utils/random.h"
 #include "../utils/text_parse.h"
+#include "../eventmanager/event_manager.h"
+#include "../eventhandle/handler/player_state.h"
 
 namespace server {
 Server::Server(Config* config)
@@ -117,6 +119,19 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                         player::eNetMessageType::NET_MESSAGE_GAME_MESSAGE,
                         fmt::format("action|join_request\nname|{}\ninvitedWorld|0", world)
                     );
+                    return false;
+                }
+                else if (token[0] == m_config->get_command().m_prefix + "save") {
+                    std::string file_name{token[1]};
+
+                    FILE* f = NULL;
+
+                    fopen_s(&f, file_name.c_str(), "wb");
+                    auto w_data = PlayerStateHandler::GetPlayerState().CurrentWorld.data;
+                    fwrite(w_data.data(), 1, w_data.size(), f);
+
+                    fclose(f);
+
                     return false;
                 }
             }

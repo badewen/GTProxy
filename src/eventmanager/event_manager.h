@@ -7,8 +7,19 @@
 #include "enet/enet.h"
 #include "../proton/shared/util/Variant.h"
 
-#define GTPROXY_CB_HANDLE_DECLARE(cb_type) using cb_type##CbHandle = eventpp::internal_::CallbackListBase<cb_type,\
-                                            eventpp::DefaultPolicies>::Handle
+#define GTPROXY_CB_HANDLE_NAME(cb_type) cb_type##CbHandle
+#define GTPROXY_CB_HANDLE_DECLARE(cb_type) using GTPROXY_CB_HANDLE_NAME(cb_type) = \
+                                                eventpp::internal_::CallbackListBase<cb_type,\
+                                                eventpp::DefaultPolicies>::Handle
+
+#define GTPROXY_ADD_EVENT_NAME(cb_type) Add##cb_type
+#define GTPROXY_SET_EVENT_NAME(cb_type) Set##cb_type
+#define GTPROXY_INVOKE_EVENT_NAME(cb_type) Invoke##cb_type
+
+#define GTPROXY_ADD_EVENT_DECLARE(cb_type) void GTPROXY_ADD_EVENT_NAME(cb_type)(std::function<cb_type> cb, const std::string& id)
+#define GTPROXY_SET_EVENT_DECLARE(cb_type) void GTPROXY_SET_EVENT_NAME(cb_type)(std::function<cb_type> cb)
+
+#define GTPROXY_INVOKE_PACKET_EVENT_DECLARE(cb_type, ...) bool GTPROXY_INVOKE_EVENT_NAME(cb_type)(__VA_ARGS__)
 
 namespace event_manager
 {
@@ -25,38 +36,69 @@ namespace event_manager
     using OnWorldEnter = void(const World& world);
     GTPROXY_CB_HANDLE_DECLARE(OnWorldEnter);
 
-    void AddOnWorldEnter(std::function<OnWorldEnter> cb, const std::string& id);
+    GTPROXY_ADD_EVENT_DECLARE(OnWorldEnter);
     void InvokeOnWorldEnter(const World& world);
 
 
     using OnReceivePacket = void(ENetPeer* peer, ENetPacket* packet, user_data* data);
 
-    void SetOnReceivePacket(std::function<OnReceivePacket> cb);
-    bool InvokeOnReceivePacket(ENetPeer* peer, ENetPacket* packet);
+    GTPROXY_SET_EVENT_DECLARE(OnReceivePacket);
+    GTPROXY_INVOKE_PACKET_EVENT_DECLARE(OnReceivePacket,
+                                        ENetPeer* peer, ENetPacket* packet);
 
 
     //these one is an actual event.
     using OnReceiveTankPacket = void(ENetPeer* peer, player::GameUpdatePacket* packet, user_data* data);
     GTPROXY_CB_HANDLE_DECLARE(OnReceiveTankPacket);
 
-    void AddOnReceiveTankPacket(std::function<OnReceiveTankPacket> cb, const std::string& id);
-
-    bool InvokeOnReceiveTankPacket(ENetPeer* peer, player::GameUpdatePacket* packet);
+    GTPROXY_ADD_EVENT_DECLARE(OnReceiveTankPacket);
+    GTPROXY_INVOKE_PACKET_EVENT_DECLARE(OnReceiveTankPacket,
+                                        ENetPeer* peer, player::GameUpdatePacket* packet);
 
 
     using OnReceiveRawPacket = void(ENetPeer* peer, ENetPacket* packet, user_data* data);
     GTPROXY_CB_HANDLE_DECLARE(OnReceiveRawPacket);
 
-    void AddOnReceiveRawPacket(std::function<OnReceiveRawPacket> cb, const std::string& id);
-
-    bool InvokeOnReceiveRawPacket(ENetPeer* peer, ENetPacket* packet);
+    GTPROXY_ADD_EVENT_DECLARE(OnReceiveRawPacket);
+    GTPROXY_INVOKE_PACKET_EVENT_DECLARE(OnReceiveRawPacket,
+                                        ENetPeer* peer, ENetPacket* packet);
 
 
     using OnReceiveVariantlist = void(ENetPeer* peer, VariantList* packet, user_data* data);
     GTPROXY_CB_HANDLE_DECLARE(OnReceiveVariantlist);
 
-    void AddOnReceiveVariantlist(std::function<OnReceiveVariantlist> cb, const std::string& id);
+    GTPROXY_ADD_EVENT_DECLARE(OnReceiveVariantlist);
+    GTPROXY_INVOKE_PACKET_EVENT_DECLARE(OnReceiveVariantlist,
+                                        ENetPeer* peer, VariantList* packet);
 
-    bool InvokeOnReceiveVariantlist(ENetPeer* peer, VariantList* packet);
+
+    using OnSendPacket = void(ENetPeer* peer, ENetPacket* packet, user_data* data);
+    GTPROXY_CB_HANDLE_DECLARE(OnSendPacket);
+
+    GTPROXY_SET_EVENT_DECLARE(OnSendPacket);
+    GTPROXY_INVOKE_PACKET_EVENT_DECLARE(OnSendPacket,
+                                        ENetPeer* peer, ENetPacket* packet);
+
+    using OnSendRawPacket = void(ENetPeer* peer, ENetPacket* packet, user_data* data);
+    GTPROXY_CB_HANDLE_DECLARE(OnSendRawPacket);
+
+    GTPROXY_ADD_EVENT_DECLARE(OnSendRawPacket);
+    GTPROXY_INVOKE_PACKET_EVENT_DECLARE(OnSendRawPacket,
+                                        ENetPeer* peer, ENetPacket* packet);
+
+    using OnSendTankPacket = void(ENetPeer* peer, player::GameUpdatePacket* packet, user_data* data);
+    GTPROXY_CB_HANDLE_DECLARE(OnSendTankPacket);
+
+    GTPROXY_ADD_EVENT_DECLARE(OnSendTankPacket);
+    GTPROXY_INVOKE_PACKET_EVENT_DECLARE(OnSendTankPacket,
+                                        ENetPeer* peer, player::GameUpdatePacket* packet);
+
+    using OnSendVariantlist = void(ENetPeer* peer, VariantList* packet, user_data* data);
+    GTPROXY_CB_HANDLE_DECLARE(OnSendVariantlist);
+
+    GTPROXY_ADD_EVENT_DECLARE(OnSendVariantlist);
+    GTPROXY_INVOKE_PACKET_EVENT_DECLARE(OnSendVariantlist,
+                                        ENetPeer* peer, VariantList* packet);
+
 
 };

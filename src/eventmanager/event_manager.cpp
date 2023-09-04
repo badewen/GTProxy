@@ -15,33 +15,49 @@ using namespace event_manager;
         code                                \
         return out.block_packet;
 
-eventpp::CallbackList<event_manager::OnWorldEnter> OnWorldEnterList {};
+#define GTPROXY_ADD_EVENT(cb_type, cb, id) \
+        auto h = cb_type##List.append(cb); \
+        cb_type##HandleList.insert_or_assign(id, h);
+
+eventpp::CallbackList<OnWorldEnter> OnWorldEnterList {};
 GTPROXY_HANDLE_LIST_DECLARE(OnWorldEnter);
 
-std::function<event_manager::OnReceivePacket> OnReceivePacketCb = nullptr;
+std::function<OnReceivePacket> OnReceivePacketCb = nullptr;
 
-eventpp::CallbackList<event_manager::OnReceiveTankPacket> OnReceiveTankPacketList {};
+eventpp::CallbackList<OnReceiveTankPacket> OnReceiveTankPacketList {};
 GTPROXY_HANDLE_LIST_DECLARE(OnReceiveTankPacket);
 
-eventpp::CallbackList<event_manager::OnReceiveRawPacket> OnReceiveRawPacketList {};
+eventpp::CallbackList<OnReceiveRawPacket> OnReceiveRawPacketList {};
 GTPROXY_HANDLE_LIST_DECLARE(OnReceiveRawPacket);
 
-eventpp::CallbackList<event_manager::OnReceiveVariantlist> OnReceiveVariantlistList {};
+eventpp::CallbackList<OnReceiveVariantlist> OnReceiveVariantlistList {};
 GTPROXY_HANDLE_LIST_DECLARE(OnReceiveVariantlist);
 
 
-void event_manager::AddOnWorldEnter(std::function<event_manager::OnWorldEnter> cb, const std::string& id) {
-    auto h = OnWorldEnterList.append(cb);
-    OnWorldEnterHandleList.insert_or_assign(id, h);
+std::function<event_manager::OnSendPacket> OnSendPacketCb = nullptr;
+
+eventpp::CallbackList<OnSendRawPacket> OnSendRawPacketList {};
+GTPROXY_HANDLE_LIST_DECLARE(OnSendRawPacket);
+
+eventpp::CallbackList<OnSendTankPacket> OnSendTankPacketList {};
+GTPROXY_HANDLE_LIST_DECLARE(OnSendTankPacket);
+
+eventpp::CallbackList<OnSendVariantlist> OnSendVariantlistList {};
+GTPROXY_HANDLE_LIST_DECLARE(OnSendVariantlist);
+
+// resisting the urge to macro-ify these function
+
+void event_manager::AddOnWorldEnter (std::function<event_manager::OnWorldEnter> cb, const std::string& id) {
+    GTPROXY_ADD_EVENT(OnWorldEnter, cb, id);
 }
 
-void event_manager::InvokeOnWorldEnter(const World& world) {
+void event_manager::InvokeOnWorldEnter (const World& world) {
     OnWorldEnterList(world);
 }
 
 
-void event_manager::SetOnReceivePacket(std::function<event_manager::OnReceivePacket> cb) {
-    OnReceivePacketCb = cb;
+void event_manager::SetOnReceivePacket(std::function<OnReceivePacket> cb) {
+    OnReceivePacketCb = std::move(cb);
 }
 
 bool event_manager::InvokeOnReceivePacket(ENetPeer* peer, ENetPacket* packet) {
@@ -52,8 +68,7 @@ bool event_manager::InvokeOnReceivePacket(ENetPeer* peer, ENetPacket* packet) {
 
 
 void event_manager::AddOnReceiveTankPacket(std::function<event_manager::OnReceiveTankPacket> cb, const std::string &id) {
-    auto h = OnReceiveTankPacketList.append(cb);
-    OnReceiveTankPacketHandleList.insert_or_assign(id, h);
+    GTPROXY_ADD_EVENT(OnReceiveTankPacket, cb, id);
 }
 
 bool
@@ -65,8 +80,7 @@ event_manager::InvokeOnReceiveTankPacket(ENetPeer *peer, player::GameUpdatePacke
 
 
 void event_manager::AddOnReceiveRawPacket(std::function<OnReceiveRawPacket> cb, const std::string &id) {
-    auto h = OnReceiveRawPacketList.append(cb);
-    OnReceiveRawPacketHandleList.insert_or_assign(id, h);
+    GTPROXY_ADD_EVENT(OnReceiveRawPacket, cb, id);
 }
 
 bool event_manager::InvokeOnReceiveRawPacket(ENetPeer *peer, ENetPacket *packet) {
@@ -77,12 +91,53 @@ bool event_manager::InvokeOnReceiveRawPacket(ENetPeer *peer, ENetPacket *packet)
 
 
 void event_manager::AddOnReceiveVariantlist(std::function<OnReceiveVariantlist> cb, const std::string &id) {
-    auto h = OnReceiveVariantlistList.append(cb);
-    OnReceiveVariantlistHandleList.insert_or_assign(id, h);
+    GTPROXY_ADD_EVENT(OnReceiveVariantlist, cb, id);
 }
 
 bool event_manager::InvokeOnReceiveVariantlist(ENetPeer *peer, VariantList* packet) {
     GTPROXY_OUT_PARAM_TO_RETURN({
        OnReceiveVariantlistList(peer, packet, &out);
+    });
+}
+
+
+void event_manager::SetOnSendPacket(std::function<OnSendPacket> cb) {
+    OnSendPacketCb = std::move(cb);
+}
+
+bool event_manager::InvokeOnSendPacket(ENetPeer *peer, ENetPacket *packet) {
+    GTPROXY_OUT_PARAM_TO_RETURN({
+       OnSendPacketCb(peer, packet, &out);
+    });
+}
+
+
+void event_manager::AddOnSendRawPacket(std::function<OnSendRawPacket> cb, const std::string &id) {
+    GTPROXY_ADD_EVENT(OnSendRawPacket, cb, id);
+}
+
+bool event_manager::InvokeOnSendRawPacket(ENetPeer *peer, ENetPacket *packet) {
+    GTPROXY_OUT_PARAM_TO_RETURN({
+       OnSendRawPacketList(peer, packet, &out);
+    });
+}
+
+void event_manager::AddOnSendTankPacket(std::function<OnSendTankPacket> cb, const std::string &id) {
+    GTPROXY_ADD_EVENT(OnSendTankPacket, cb, id);
+}
+
+bool event_manager::InvokeOnSendTankPacket(ENetPeer *peer, player::GameUpdatePacket *packet) {
+    GTPROXY_OUT_PARAM_TO_RETURN({
+       OnSendTankPacketList(peer, packet, &out);
+    });
+}
+
+void event_manager::AddOnSendVariantlist(std::function<OnSendVariantlist> cb, const std::string &id) {
+    GTPROXY_ADD_EVENT(OnSendVariantlist, cb, id);
+}
+
+bool event_manager::InvokeOnSendVariantlist(ENetPeer *peer, VariantList *packet) {
+    GTPROXY_OUT_PARAM_TO_RETURN({
+       OnSendVariantlistList(peer, packet, &out);
     });
 }

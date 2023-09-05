@@ -43,6 +43,11 @@ Server::Server(Config* config)
 
 Server::~Server()
 {
+    event_manager::RemoveOnSendPacket();
+    event_manager::RemoveOnSendRawPacket("ServerInternal");
+    event_manager::RemoveOnSendVariantlist("ServerInternal");
+    event_manager::RemoveOnSendTankPacket("ServerInternal");
+
     delete m_http;
     delete m_peer.m_gt_client;
     delete m_client;

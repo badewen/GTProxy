@@ -20,6 +20,7 @@
 #define GTPROXY_ADD_EVENT_DECLARE(cb_type) void GTPROXY_ADD_EVENT_NAME(cb_type)(std::function<cb_type> cb, const std::string& id)
 #define GTPROXY_SET_EVENT_DECLARE(cb_type) void GTPROXY_SET_EVENT_NAME(cb_type)(std::function<cb_type> cb)
 #define GTPROXY_REMOVE_EVENT_DECLARE(cb_type) void GTPROXY_REMOVE_EVENT_NAME(cb_type)(const std::string& id)
+#define GTPROXY_RESET_EVENT_DECLARE(cb_type) void GTPROXY_REMOVE_EVENT_NAME(cb_type)()
 
 #define GTPROXY_INVOKE_PACKET_EVENT_DECLARE(cb_type, ...) bool GTPROXY_INVOKE_EVENT_NAME(cb_type)(__VA_ARGS__)
 
@@ -39,13 +40,14 @@ namespace event_manager
     GTPROXY_CB_HANDLE_DECLARE(OnWorldEnter);
 
     GTPROXY_ADD_EVENT_DECLARE(OnWorldEnter);
+    GTPROXY_REMOVE_EVENT_DECLARE(OnWorldEnter);
     void InvokeOnWorldEnter(const World& world);
 
 
     using OnReceivePacket = void(ENetPeer* peer, ENetPacket* packet, user_data* data);
 
     GTPROXY_SET_EVENT_DECLARE(OnReceivePacket);
-    GTPROXY_REMOVE_EVENT_DECLARE(OnReceivePacket);
+    GTPROXY_RESET_EVENT_DECLARE(OnReceivePacket);
     GTPROXY_INVOKE_PACKET_EVENT_DECLARE(OnReceivePacket,
                                         ENetPeer* peer, ENetPacket* packet);
 
@@ -82,7 +84,7 @@ namespace event_manager
     GTPROXY_CB_HANDLE_DECLARE(OnSendPacket);
 
     GTPROXY_SET_EVENT_DECLARE(OnSendPacket);
-    GTPROXY_REMOVE_EVENT_DECLARE(OnSendPacket);
+    GTPROXY_RESET_EVENT_DECLARE(OnSendPacket);
     GTPROXY_INVOKE_PACKET_EVENT_DECLARE(OnSendPacket,
                                         ENetPeer* peer, ENetPacket* packet);
 

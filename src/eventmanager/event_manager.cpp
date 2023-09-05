@@ -19,12 +19,6 @@ using namespace event_manager;
         auto h = cb_type##List.append(cb); \
         cb_type##HandleList.insert_or_assign(id, h);
 
-#define GTPROXY_IMPL_GENERIC_SET_EVENT(cb_type) \
-        GTPROXY_SET_EVENT_DECLARE(cb_type) {    \
-            cb_type##Cb = std::move(cb);        \
-        }
-
-
 eventpp::CallbackList<OnWorldEnter> OnWorldEnterList {};
 GTPROXY_HANDLE_LIST_DECLARE(OnWorldEnter);
 
@@ -51,7 +45,9 @@ GTPROXY_HANDLE_LIST_DECLARE(OnSendTankPacket);
 eventpp::CallbackList<OnSendVariantlist> OnSendVariantlistList {};
 GTPROXY_HANDLE_LIST_DECLARE(OnSendVariantlist);
 
-// resisting the urge to macro-ify these function
+// resisting the urge to macro-ify these function. (failed)
+// post-reflection thought:
+// "die as a hero or live long enough to see yourself become a villain"
 
 void event_manager::AddOnWorldEnter (std::function<event_manager::OnWorldEnter> cb, const std::string& id) {
     GTPROXY_ADD_EVENT(OnWorldEnter, cb, id);
@@ -61,7 +57,10 @@ void event_manager::InvokeOnWorldEnter (const World& world) {
     OnWorldEnterList(world);
 }
 
-GTPROXY_IMPL_GENERIC_SET_EVENT(OnReceivePacket);
+void event_manager::RemoveOnWorldEnter(const std::string& id) {
+    OnWorldEnterList.remove(OnWorldEnterHandleList[id]);
+}
+
 void event_manager::SetOnReceivePacket(std::function<OnReceivePacket> cb) {
     OnReceivePacketCb = std::move(cb);
 }
@@ -77,6 +76,10 @@ void event_manager::AddOnReceiveTankPacket(std::function<event_manager::OnReceiv
     GTPROXY_ADD_EVENT(OnReceiveTankPacket, cb, id);
 }
 
+void event_manager::RemoveOnReceiveTankPacket(const std::string &id) {
+    OnReceiveTankPacketList.remove(OnReceiveTankPacketHandleList[id]);
+}
+
 bool
 event_manager::InvokeOnReceiveTankPacket(ENetPeer *peer, player::GameUpdatePacket *packet) {
     GTPROXY_OUT_PARAM_TO_RETURN({
@@ -89,6 +92,10 @@ void event_manager::AddOnReceiveRawPacket(std::function<OnReceiveRawPacket> cb, 
     GTPROXY_ADD_EVENT(OnReceiveRawPacket, cb, id);
 }
 
+void event_manager::RemoveOnReceiveRawPacket(const std::string &id) {
+    OnReceiveRawPacketList.remove(OnReceiveRawPacketHandleList[id]);
+}
+
 bool event_manager::InvokeOnReceiveRawPacket(ENetPeer *peer, ENetPacket *packet) {
     GTPROXY_OUT_PARAM_TO_RETURN({
         OnReceiveRawPacketList(peer, packet, &out);
@@ -98,6 +105,10 @@ bool event_manager::InvokeOnReceiveRawPacket(ENetPeer *peer, ENetPacket *packet)
 
 void event_manager::AddOnReceiveVariantlist(std::function<OnReceiveVariantlist> cb, const std::string &id) {
     GTPROXY_ADD_EVENT(OnReceiveVariantlist, cb, id);
+}
+
+void event_manager::RemoveOnReceiveVariantlist(const std::string &id) {
+    OnReceiveVariantlistList.remove(OnReceiveVariantlistHandleList[id]);
 }
 
 bool event_manager::InvokeOnReceiveVariantlist(ENetPeer *peer, VariantList* packet) {
@@ -122,6 +133,10 @@ void event_manager::AddOnSendRawPacket(std::function<OnSendRawPacket> cb, const 
     GTPROXY_ADD_EVENT(OnSendRawPacket, cb, id);
 }
 
+void event_manager::RemoveOnSendRawPacket(const std::string &id) {
+    OnSendRawPacketList.remove(OnSendRawPacketHandleList[id]);
+}
+
 bool event_manager::InvokeOnSendRawPacket(ENetPeer *peer, ENetPacket *packet) {
     GTPROXY_OUT_PARAM_TO_RETURN({
        OnSendRawPacketList(peer, packet, &out);
@@ -132,6 +147,10 @@ void event_manager::AddOnSendTankPacket(std::function<OnSendTankPacket> cb, cons
     GTPROXY_ADD_EVENT(OnSendTankPacket, cb, id);
 }
 
+void event_manager::RemoveOnSendTankPacket(const std::string &id) {
+    OnSendTankPacketList.remove(OnSendTankPacketHandleList[id]);
+}
+
 bool event_manager::InvokeOnSendTankPacket(ENetPeer *peer, player::GameUpdatePacket *packet) {
     GTPROXY_OUT_PARAM_TO_RETURN({
        OnSendTankPacketList(peer, packet, &out);
@@ -140,6 +159,10 @@ bool event_manager::InvokeOnSendTankPacket(ENetPeer *peer, player::GameUpdatePac
 
 void event_manager::AddOnSendVariantlist(std::function<OnSendVariantlist> cb, const std::string &id) {
     GTPROXY_ADD_EVENT(OnSendVariantlist, cb, id);
+}
+
+void event_manager::RemoveOnSendVariantlist(const std::string &id) {
+    OnSendVariantlistList.remove(OnSendVariantlistHandleList[id]);
 }
 
 bool event_manager::InvokeOnSendVariantlist(ENetPeer *peer, VariantList *packet) {

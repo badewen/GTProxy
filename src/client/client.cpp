@@ -38,6 +38,10 @@ Client::Client(Config* config, server::Http* http, server::Server* server)
 
 Client::~Client()
 {
+    event_manager::RemoveOnReceivePacket();
+    event_manager::RemoveOnReceiveRawPacket("ClientInternal");
+    event_manager::RemoveOnReceiveVariantlist("ClientInternal");
+    event_manager::RemoveOnReceiveTankPacket("ClientInternal");
     delete m_peer.m_gt_server;
 }
 

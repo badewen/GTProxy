@@ -3,6 +3,7 @@
 #include "../config.h"
 #include "../enetwrapper/enet_client.h"
 #include "../player/peer.h"
+#include "../eventmanager/event_manager.h"
 
 namespace server {
 class Server;
@@ -22,7 +23,9 @@ public:
     void on_disconnect(ENetPeer* peer) override;
 
     bool process_packet(ENetPeer* peer, ENetPacket* packet);
+    bool process_raw_packet(ENetPeer* peer, ENetPacket* packet);
     bool process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet);
+    bool process_variant_list(ENetPeer* peer, VariantList* packet);
 
 public:
     void set_gt_client_peer(player::Peer* peer) { m_peer.m_gt_client = peer; }

@@ -145,7 +145,7 @@ struct GameUpdatePacket {
 static_assert((sizeof(GameUpdatePacket) == 56) && "Invalid GameUpdatePacket size.");
 #pragma pack(pop)
 
-inline eNetMessageType message_type_to_string(ENetPacket* packet)
+inline eNetMessageType get_message_type(const ENetPacket* packet)
 {
     if (packet->dataLength > 3) {
         return static_cast<eNetMessageType>(*packet->data);
@@ -155,13 +155,15 @@ inline eNetMessageType message_type_to_string(ENetPacket* packet)
     return NET_MESSAGE_UNKNOWN;
 }
 
-inline char* get_text(ENetPacket* packet)
+inline std::string get_text(const ENetPacket* packet)
 {
-    std::memset(packet->data + packet->dataLength - 1, 0, 1);
-    return reinterpret_cast<char*>(packet->data + 4);
+//    std::memset(packet->data + packet->dataLength - 1, 0, 1);
+    std::vector<char> temp (packet->data + 4, packet->data + packet->dataLength - 1);
+
+    return { temp.begin(), temp.end() };
 }
 
-inline char* get_struct(ENetPacket* packet, int length)
+inline char* get_struct(const ENetPacket* packet, int length)
 {
     if (packet->dataLength < length + 4) {
         return nullptr;
@@ -170,7 +172,7 @@ inline char* get_struct(ENetPacket* packet, int length)
     return reinterpret_cast<char*>(packet->data + 4);
 }
 
-inline GameUpdatePacket* get_struct(ENetPacket* packet)
+inline GameUpdatePacket* get_tank_packet(const ENetPacket* packet)
 {
     if (packet->dataLength < sizeof(GameUpdatePacket)) {
         return nullptr;

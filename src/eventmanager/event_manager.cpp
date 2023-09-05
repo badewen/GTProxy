@@ -19,6 +19,12 @@ using namespace event_manager;
         auto h = cb_type##List.append(cb); \
         cb_type##HandleList.insert_or_assign(id, h);
 
+#define GTPROXY_IMPL_GENERIC_SET_EVENT(cb_type) \
+        GTPROXY_SET_EVENT_DECLARE(cb_type) {    \
+            cb_type##Cb = std::move(cb);        \
+        }
+
+
 eventpp::CallbackList<OnWorldEnter> OnWorldEnterList {};
 GTPROXY_HANDLE_LIST_DECLARE(OnWorldEnter);
 
@@ -55,7 +61,7 @@ void event_manager::InvokeOnWorldEnter (const World& world) {
     OnWorldEnterList(world);
 }
 
-
+GTPROXY_IMPL_GENERIC_SET_EVENT(OnReceivePacket);
 void event_manager::SetOnReceivePacket(std::function<OnReceivePacket> cb) {
     OnReceivePacketCb = std::move(cb);
 }

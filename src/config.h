@@ -2,6 +2,7 @@
 #include <string>
 
 class Config {
+public:
     struct Host {
         std::uint16_t m_port;
     };
@@ -23,21 +24,20 @@ class Config {
     };
 
 public:
-    Config();
-    ~Config() = default;
 
-    bool create(const std::string& file);
-    bool load(const std::string& file);
+    static void Init();
+    static bool Create(const std::string& file);
+    static bool Load(const std::string& file);
 
 public:
-    [[nodiscard]] const Host& get_host() const { return m_host; }
-    [[nodiscard]] const Server& get_server() const { return m_server; }
-    [[nodiscard]] const Command& get_command() const { return m_command; }
-    [[nodiscard]] const Misc& get_misc() const { return m_misc; }
+    [[nodiscard]] static const Host& get_host() { return s_host; }
+    [[nodiscard]] static const Server& get_server() { return s_server; }
+    [[nodiscard]] static const Command& get_command() { return s_command; }
+    [[nodiscard]] static const Misc& get_misc() { return s_misc; }
 
 private:
-    Host m_host;
-    Server m_server;
-    Command m_command;
-    Misc m_misc;
+    static Host s_host;
+    static Server s_server;
+    static Command s_command;
+    static Misc s_misc;
 };

@@ -6,13 +6,13 @@
 
 namespace server {
 class Server;
-class Http;
 }
 
 namespace client {
 class Client : public enet_wrapper::ENetClient {
+    friend server::Server;
 public:
-    Client(Config* config, server::Http* http, server::Server* server);
+    explicit Client(server::Server* server);
     ~Client();
 
     void start();
@@ -25,18 +25,12 @@ public:
     bool process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet);
 
 public:
-    void set_gt_client_peer(player::Peer* peer) { m_peer.m_gt_client = peer; }
+    void send_to_gt_server(ENetPacket* packet) { m_gt_server  && m_gt_server->is_connected() ? m_gt_server->send_packet_packet(packet) : 0; };
+    bool is_valid() { return m_gt_server && m_gt_server->is_connected(); }
 
 private:
-    Config* m_config;
-    server::Http* m_http;
-    server::Server* m_server;
-
-    struct {
-        player::Peer* m_gt_server;
-        player::Peer* m_gt_client;
-        enet_uint32 m_client_connect_id;
-    } m_peer;
+    server::Server* m_proxy_server;
+    player::Peer* m_gt_server{};
 
     struct {
         enet_uint8 m_using_new_packet;

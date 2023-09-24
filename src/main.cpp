@@ -51,8 +51,14 @@ int main()
 
     EventHandlerRegistry::Init();
 
-    auto config{ new Config{} };
-    if (!config->load("config.json")) {
+    Config::Init();
+    if (!Config::Load("config.json")) {
+        return 1;
+    }
+
+    server::Http::Init();
+    if (!server::Http::listen("0.0.0.0", 443)) {
+        spdlog::error("Failed to bind http server. port : 443");
         return 1;
     }
 
@@ -61,7 +67,7 @@ int main()
         return 1;
     }
 
-    auto server{ std::make_unique<server::Server>(config) };
+    auto server{ std::make_unique<server::Server>() };
     if (!server->start()) {
         return 1;
     }

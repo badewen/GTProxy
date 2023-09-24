@@ -16,9 +16,9 @@ Result Resolver::ResolveHostname(std::string hostname) {
     if (!res->body.empty()) {
         auto j = nlohmann::json::parse(res->body);
 
-        ret.Status = j["Status"];
+        ret.Statuz = j["Status"];
 
-        if (ret.Status != Status::NoError) {
+        if (ret.Statuz != Status::NoError) {
             ret.Ip = "";
             return ret;
         }

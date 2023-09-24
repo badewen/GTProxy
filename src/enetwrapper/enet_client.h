@@ -3,6 +3,7 @@
 #include <thread>
 #include <atomic>
 #include <enet/enet.h>
+#include "../player/peer.h"
 
 namespace enet_wrapper {
 class ENetClient {

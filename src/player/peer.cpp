@@ -19,20 +19,23 @@ Peer::~Peer()
     delete reinterpret_cast<uint8_t*>(m_peer->data);
 }
 
+ENetPacket* Peer::build_packet(eNetMessageType type, const std::vector<uint8_t>& data)
+{
+    std::vector<std::byte> packet_data(sizeof(type) + data.size());
+    std::memcpy(packet_data.data(), &type, sizeof(type));
+    std::memcpy(packet_data.data() + sizeof(type), data.data(), data.size());
+
+    ENetPacket* packet{ enet_packet_create(packet_data.data(), packet_data.size(), ENET_PACKET_FLAG_RELIABLE) };
+    return packet;
+}
+
 int Peer::send_packet(eNetMessageType type, const std::string& data)
 {
     if (!m_peer) {
         return -1;
     }
 
-    std::vector<std::byte> packet_data(sizeof(type) + data.length());
-    std::memcpy(packet_data.data(), &type, sizeof(type));
-    std::memcpy(packet_data.data() + sizeof(type), data.c_str(), data.length());
-
-    ENetPacket* packet{ enet_packet_create(packet_data.data(), packet_data.size(), ENET_PACKET_FLAG_RELIABLE) };
-    
-
-    return send_packet_packet(packet);
+    return send_packet_packet( build_packet(type, { data.begin(), data.end() }) );
 }
 
 int Peer::send_packet_packet(ENetPacket* packet)
@@ -50,21 +53,13 @@ int Peer::send_packet_packet(ENetPacket* packet)
     return ret;
 }
 
-int Peer::send_raw_packet(
-    eNetMessageType type,
-    GameUpdatePacket* game_update_packet,
-    size_t length,
-    uint8_t* extended_data,
-    enet_uint32 flags
+ENetPacket* Peer::build_raw_packet(
+        GameUpdatePacket* game_update_packet,
+        eNetMessageType type,
+        size_t length,
+        uint8_t* extended_data,
+        enet_uint32 flags
 ) {
-    if (!m_peer) {
-        return -1;
-    }
-
-    if (length > 1000000) {
-        return -1;
-    }
-
     ENetPacket* packet;
     if (type == NET_MESSAGE_GAME_PACKET && game_update_packet->flags.bExtended) {
         packet = enet_packet_create(nullptr, length + game_update_packet->data_size + 5, flags);
@@ -78,14 +73,27 @@ int Peer::send_raw_packet(
         std::memcpy(packet->data + sizeof(eNetMessageType), game_update_packet, length);
     }
 
-    
-    return send_packet_packet(packet);
+    return packet;
 }
 
-int Peer::send_variant(VariantList&& variant_list, std::uint32_t net_id, enet_uint32 flags)
+int
+Peer::send_raw_packet(GameUpdatePacket *game_update_packet, eNetMessageType type, size_t length, uint8_t *extended_data,
+                      enet_uint32 flags) {
+    if (!m_peer) {
+        return -1;
+    }
+
+    if (length > 1000000) {
+        return -1;
+    }
+
+    return send_packet_packet(build_raw_packet(game_update_packet));
+}
+
+ENetPacket* Peer::build_variant_packet(VariantList&& variant_list, std::uint32_t net_id, enet_uint32 flags)
 {
     if (variant_list.Get(0).GetType() == eVariantType::TYPE_UNUSED) {
-        return -1;
+        return nullptr;
     }
 
     GameUpdatePacket game_update_packet{};
@@ -94,11 +102,15 @@ int Peer::send_variant(VariantList&& variant_list, std::uint32_t net_id, enet_ui
     game_update_packet.flags.bExtended = true;
     game_update_packet.data_size = 0;
 
-    std::uint8_t* data{ variant_list.SerializeToMem(&game_update_packet.data_size, nullptr) };
+    std::shared_ptr<std::uint8_t> data{ variant_list.SerializeToMem(&game_update_packet.data_size, nullptr) };
     variant_list.Reset();
 
-    int ret{ send_raw_packet(eNetMessageType::NET_MESSAGE_GAME_PACKET, &game_update_packet, sizeof(GameUpdatePacket), data, flags) };
-    delete data;
-    return ret;
+    return build_raw_packet(&game_update_packet, eNetMessageType::NET_MESSAGE_GAME_PACKET, sizeof(GameUpdatePacket),
+                            data.get(), flags);
+}
+
+int Peer::send_variant(VariantList&& variant_list, std::uint32_t net_id, enet_uint32 flags)
+{
+    return send_packet_packet(build_variant_packet(std::move(variant_list), net_id, flags));
 }
 }

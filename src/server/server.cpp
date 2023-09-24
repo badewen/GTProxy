@@ -12,35 +12,28 @@
 #include "../eventhandle/handler/player_state.h"
 
 namespace server {
-Server::Server(Config* config)
+Server::Server()
     : enet_wrapper::ENetServer{}
-    , m_config{ config }
-    , m_peer{ nullptr }
+    , m_peer {}
 {
-    m_http = new Http{ config };
-    m_client = new client::Client{ m_config, m_http, this };
+    m_gt_server_client = new client::Client{ this };
 }
 
 Server::~Server()
 {
-    delete m_http;
-    delete m_peer.m_gt_client;
-    delete m_client;
+    delete m_gt_server_client;
+    delete m_peer.m_gt_server_client;
 }
 
 bool Server::start()
 {
-    if (!m_http->listen("0.0.0.0", 443)) {
-        return false;
-    }
-
-    if (!create_host(m_config->get_host().m_port, 1, 1)) {
+    if (!create_host(Config::get_host().m_port, 1, 1)) {
         spdlog::error("Failed to create ENet server host.");
         return false;
     }
 
     start_service();
-    spdlog::info("ENet server listening on port {}.", m_config->get_host().m_port);
+    spdlog::info("ENet server listening on port {}.", Config::get_host().m_port);
     return true;
 }
 
@@ -48,39 +41,35 @@ void Server::on_connect(ENetPeer* peer)
 {
     spdlog::info("New client connected to proxy server.");
 
-    m_peer.m_gt_client = new player::Peer{ peer };
-    m_client->set_gt_client_peer(m_peer.m_gt_client);
-    m_client->start();
+    m_gt_client = new player::Peer{ peer };
+    m_gt_server_client->start();
+    m_peer.m_gt_server_client = new player::Peer{ m_gt_server_client->m_peer };
 }
 
 void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
 {
-    if (!m_peer.m_gt_server) {
+    if (!is_gt_server_client_valid()) {
         return;
     }
-
-    if (!m_peer.m_gt_server->is_connected()) {
-        return;
-    }
-
     if (!process_packet(peer, packet)) {
         return;
     }
 
-    m_peer.m_gt_server->send_packet_packet(packet);
+    m_peer.m_gt_server_client->send_packet_packet(packet);
 }
 
 void Server::on_disconnect(ENetPeer* peer)
 {
     spdlog::info("Client disconnected from proxy server.");
 
-    if (m_peer.m_gt_server && m_peer.m_gt_server->is_connected()) {
-        m_peer.m_gt_server->disconnect();
+    if (m_peer.m_gt_server_client && m_peer.m_gt_server_client->is_connected()) {
+        m_peer.m_gt_server_client->disconnect();
     }
 
-    delete m_peer.m_gt_client;
-    m_peer.m_gt_client = nullptr;
-    m_client->set_gt_client_peer(nullptr);
+//    delete m_peer.m_gt_server_client;
+    delete m_gt_client;
+    m_gt_client = nullptr;
+    m_peer.m_gt_server_client = nullptr;
 }
 
 bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
@@ -113,15 +102,15 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                     message_data.length() - message_data.find("text|") - 1
                 ), " " )};
 
-                if (token[0] == m_config->get_command().m_prefix + "warp") {
+                if (token[0] == Config::get_command().m_prefix + "warp") {
                     std::string world{token[1]};
-                    m_peer.m_gt_server->send_packet(
+                    m_peer.m_gt_server_client->send_packet(
                         player::eNetMessageType::NET_MESSAGE_GAME_MESSAGE,
                         fmt::format("action|join_request\nname|{}\ninvitedWorld|0", world)
                     );
                     return false;
                 }
-                else if (token[0] == m_config->get_command().m_prefix + "save") {
+                else if (token[0] == Config::get_command().m_prefix + "save") {
                     std::string file_name{token[1]};
 
                     FILE* f = NULL;
@@ -148,9 +137,9 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
 
                 text_parse.add_key_once("klv|");
 
-                text_parse.set("game_version", m_config->get_server().m_game_version);
-                text_parse.set("protocol", m_config->get_server().m_protocol);
-                // text_parse.set("platformID", m_config->m_server.platformID);
+                text_parse.set("game_version", Config::get_server().m_game_version);
+                text_parse.set("protocol", Config::get_server().m_protocol);
+                // text_parse.set("platformID", Config::m_server.platformID);
                 text_parse.set("mac", mac);
                 text_parse.set("rid", rid);
                 text_parse.set("wk", wk);
@@ -166,7 +155,7 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                 );
 
                 spdlog::debug("{}", text_parse.get_all_raw());
-                m_peer.m_gt_server->send_packet(message_type, text_parse.get_all_raw());
+                m_peer.m_gt_server_client->send_packet(message_type, text_parse.get_all_raw());
                 return false;
             }
 
@@ -174,7 +163,7 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
         }
         case player::NET_MESSAGE_GAME_MESSAGE: {
             if (message_data.find("action|quit") != std::string::npos && message_data.length() <= 15) {
-                m_peer.m_gt_client->disconnect();
+                m_gt_client->disconnect();
             }
 
             break;
@@ -208,7 +197,7 @@ bool Server::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket
 
     switch (game_update_packet->type) {
         case player::PACKET_DISCONNECT:
-            m_peer.m_gt_client->disconnect_now();
+            m_gt_client->disconnect_now();
             break;
         default:
             break;

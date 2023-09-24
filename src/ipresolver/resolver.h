@@ -19,7 +19,7 @@ enum Status {
 
 struct Result {
     std::string Ip;
-    Status Status;
+    Status Statuz;
 };
 
 Result ResolveHostname(std::string hostname);

@@ -3,14 +3,29 @@
 #include <spdlog/spdlog.h>
 
 #include "config.h"
+// fucking ugly hack.
+// msvc complaining on
+// config.h(37,25): error C3927: '->': trailing return type is not allowed after a non-function declarator
+// ????
+// http.cpp works fine with static member declared inside the clas?????
+// im going insane because of msvc lmao
+Config::Host s_host;
+Config::Server s_server;
+Config::Command s_command;
+Config::Misc s_misc;
 
-Config::Host s_host{};
-Config::Server s_server{};
-Config::Command s_command{};
-Config::Misc s_misc{};
+Config::Host Config::get_host() { return s_host; }
+Config::Server Config::get_server() { return s_server; }
+Config::Command Config::get_command() { return s_command; }
+Config::Misc Config::get_misc() { return s_misc; }
 
 void Config::Init()
 {
+    s_host = {};
+    s_server = {};
+    s_command = {};
+    s_misc = {};
+
     // Initializes the configuration settings to default values.
     s_host.m_port = 16999;
     s_server.m_host = "www.growtopia1.com";
@@ -48,7 +63,7 @@ bool Config::Load(const std::string& file)
 {
     std::ifstream ifs{ file };
     if (!ifs.is_open()) {
-        return create(file);
+        return Create(file);
     }
 
     nlohmann::json j{};

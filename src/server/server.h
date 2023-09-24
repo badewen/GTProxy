@@ -19,7 +19,9 @@ public:
     void on_disconnect(ENetPeer* peer) override;
 
     bool process_packet(ENetPeer* peer, ENetPacket* packet);
+    bool process_raw_packet(ENetPeer* peer, ENetPacket* packet);
     bool process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet) const;
+    bool process_variant_list(ENetPeer* peer, VariantList* packet);
 
 public:
     player::Peer* get_gt_client_peer() { return m_gt_client; }

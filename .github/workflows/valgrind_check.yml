@@ -1,0 +1,65 @@
+name: Memory leak check
+
+on:
+  push:
+    branches:
+      - 'develop'
+      - 'feature/**'
+    paths-ignore:
+      - '.idea/**'
+      - '.gitignore'
+      - '**.md'
+      - 'LICENSE'
+  pull_request:
+    paths-ignore:
+      - '.idea/**'
+      - '.gitignore'
+      - '**.md'
+      - 'LICENSE'
+
+jobs:
+  dev:
+    runs-on: ubuntu-latest
+    env:
+      BUILD_TYPE: Debug
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: Install build-essential
+        run: sudo apt install build-essential -y
+
+      - name: Install conan
+        run: pip install "conan>2.0"
+
+      - name: Cache Conan packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.conan2/p
+          key: ${{ runner.os }}-conan-${{ hashFiles('conanfile.py') }}
+          restore-keys: ${{ runner.os }}-conan-
+
+      - name: Cache CMake
+        id: cache-cmake
+        uses: actions/cache@v3
+        with:
+          path: ${{github.workspace}}/build
+          key: ${{ runner.os }}-cmake
+
+      - name: Configure CMake
+        run: cmake -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGTPROXY_BUILD_VERSION=${{github.run_number}}
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}\build --config ${{env.BUILD_TYPE}}
+
+      - name: Install Valgrind
+        run: |
+           ls ${{github.workspace}}\build\src\${{env.BUILD_TYPE}}
+           sudo apt update && sudo apt install -y valgrind
+
+      - name: Check memleak
+        run: |
+          valgrind --leak-check=yes ${{github.workspace}}/output/

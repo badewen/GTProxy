@@ -30,7 +30,7 @@ jobs:
           submodules: "recursive"
 
       - name: Install build-essential
-        run: apt install build-essential
+        run: sudo apt install build-essential -y
 
       - name: Install conan
         run: pip install "conan>2.0"

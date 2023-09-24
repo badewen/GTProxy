@@ -21,7 +21,7 @@ file(GLOB GTPROXY_SOURCE_FILES
 
 add_executable(${PROJECT_NAME}
     ${GTPROXY_INCLUDE_FILES}
-    ${GTPROXY_SOURCE_FILES} world/world.cpp world/world.h eventmanager/event_manager.cpp eventmanager/event_manager.h eventhandle/event_handler_registry.h eventhandle/handler/player_state.cpp eventhandle/handler/player_state.h eventhandle/command/commands/ICommand.cpp eventhandle/command/commands/ICommand.h eventhandle/command/command_manager.cpp eventhandle/command/command_manager.h)
+    ${GTPROXY_SOURCE_FILES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     C_STANDARD 11

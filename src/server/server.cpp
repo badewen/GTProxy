@@ -64,7 +64,7 @@ void Server::on_disconnect(ENetPeer* peer)
         m_peer.m_gt_server_client->disconnect();
     }
 
-//    delete m_peer.m_gt_server_client;
+    delete m_peer.m_gt_server_client;
     delete m_gt_client;
     m_gt_client = nullptr;
     m_peer.m_gt_server_client = nullptr;

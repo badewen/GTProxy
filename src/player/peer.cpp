@@ -17,6 +17,7 @@ Peer::Peer(ENetPeer* peer)
 Peer::~Peer()
 {
     delete reinterpret_cast<uint8_t*>(m_peer->data);
+    m_peer->data = nullptr;
 }
 
 ENetPacket* Peer::build_packet(eNetMessageType type, const std::vector<uint8_t>& data)

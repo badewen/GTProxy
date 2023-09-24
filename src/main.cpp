@@ -6,7 +6,6 @@
 #include "config.h"
 #include "enetwrapper/enet_wrapper.h"
 #include "server/server.h"
-#include "eventhandle/event_handler_registry.h"
 
 int main()
 {
@@ -48,8 +47,6 @@ int main()
     }
 
     spdlog::info("Starting GTProxy v{}...", GTPROXY_VERSION);
-
-    EventHandlerRegistry::Init();
 
     Config::Init();
     if (!Config::Load("config.json")) {

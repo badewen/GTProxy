@@ -5,7 +5,6 @@
 #include "../server/server.h"
 #include "../utils/hash.h"
 #include "../utils/text_parse.h"
-#include "../eventmanager/event_manager.h"
 
 namespace client {
 Client::Client(server::Server* server)
@@ -81,7 +80,7 @@ void Client::on_disconnect(ENetPeer* peer)
 
 bool Client::process_packet(ENetPeer* peer, ENetPacket* packet)
 {
-    player::eNetMessageType message_type{ player::message_type_to_string(packet) };
+    player::eNetMessageType message_type{ player::get_message_type(packet) };
     std::string message_data{ player::get_text(packet) };
 
     if (message_type != player::NET_MESSAGE_GAME_PACKET) {
@@ -98,7 +97,7 @@ bool Client::process_packet(ENetPeer* peer, ENetPacket* packet)
 
     switch (message_type) {
         case player::NET_MESSAGE_GAME_PACKET: {
-            player::GameUpdatePacket* game_update_packet{ player::get_struct(packet) };
+            player::GameUpdatePacket* game_update_packet{ player::get_tank_packet(packet) };
             return process_tank_update_packet(peer, game_update_packet);
         }
         default:
@@ -183,16 +182,16 @@ bool Client::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket
             break;
         }
 
-        case player::PACKET_SEND_MAP_DATA: {
-            std::uint8_t* raw_world_data{ player::get_extended_data(game_update_packet) };
-            if (!raw_world_data) {
-                break;
-            }
-            std::vector<std::uint8_t> raw_world_data_vector{ raw_world_data, raw_world_data + game_update_packet->data_size };
-
-            event_manager::InvokeOnWorldEnter(raw_world_data_vector);
-
-        }
+//        case player::PACKET_SEND_MAP_DATA: {
+//            std::uint8_t* raw_world_data{ player::get_extended_data(game_update_packet) };
+//            if (!raw_world_data) {
+//                break;
+//            }
+//            std::vector<std::uint8_t> raw_world_data_vector{ raw_world_data, raw_world_data + game_update_packet->data_size };
+//
+//            event_manager::InvokeOnWorldEnter(raw_world_data_vector);
+//
+//        }
 
         default:
             break;

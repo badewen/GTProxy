@@ -8,8 +8,6 @@
 #include "../utils/hash.h"
 #include "../utils/random.h"
 #include "../utils/text_parse.h"
-#include "../eventmanager/event_manager.h"
-#include "../eventhandle/handler/player_state.h"
 
 namespace server {
 Server::Server()
@@ -74,7 +72,7 @@ void Server::on_disconnect(ENetPeer* peer)
 
 bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
 {
-    player::eNetMessageType message_type{ player::message_type_to_string(packet) };
+    player::eNetMessageType message_type{ player::get_message_type(packet) };
     std::string message_data{ player::get_text(packet) };
 
     if (message_type != player::NET_MESSAGE_GAME_PACKET) {
@@ -110,19 +108,19 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                     );
                     return false;
                 }
-                else if (token[0] == Config::get_command().m_prefix + "save") {
-                    std::string file_name{token[1]};
-
-                    FILE* f = NULL;
-
-                    fopen_s(&f, file_name.c_str(), "wb");
-                    auto w_data = PlayerStateHandler::GetPlayerState().CurrentWorld.data;
-                    fwrite(w_data.data(), 1, w_data.size(), f);
-
-                    fclose(f);
-
-                    return false;
-                }
+//                else if (token[0] == Config::get_command().m_prefix + "save") {
+//                    std::string file_name{token[1]};
+//
+//                    FILE* f = NULL;
+//
+//                    fopen_s(&f, file_name.c_str(), "wb");
+//                    auto w_data = PlayerStateHandler::GetPlayerState().CurrentWorld.data;
+//                    fwrite(w_data.data(), 1, w_data.size(), f);
+//
+//                    fclose(f);
+//
+//                    return false;
+//                }
             }
             else if (message_data.find("requestedName") != std::string::npos) {
                 static randutils::pcg_rng gen{ utils::random::get_generator_local() };
@@ -169,7 +167,7 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
             break;
         }
         case player::NET_MESSAGE_GAME_PACKET: {
-            player::GameUpdatePacket* game_update_packet{ player::get_struct(packet) };
+            player::GameUpdatePacket* game_update_packet{ player::get_tank_packet(packet)  };
             return process_tank_update_packet(peer, game_update_packet);
         }
         default:

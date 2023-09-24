@@ -3,7 +3,6 @@
 #include "../config.h"
 #include "../enetwrapper/enet_client.h"
 #include "../player/peer.h"
-#include "../eventmanager/event_manager.h"
 
 namespace server {
 class Server;

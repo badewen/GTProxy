@@ -24,9 +24,15 @@ class GTProxyRecipe(ConanFile):
     def generate(self):
         for dep in self.dependencies.values():
             if dep.cpp_info.bindirs:
-                copy(self, "*.dll", dep.cpp_info.bindirs[0], self.build_folder)
+                if self.settings.os == "Linux":
+                    copy(self, "*.so", dep.cpp_info.bindirs[0], self.build_folder)
+                elif self.settings.os == "Windows":
+                    copy(self, "*.dll", dep.cpp_info.bindirs[0], self.build_folder)
             if dep.cpp_info.libdirs:
-                copy(self, "*.lib", dep.cpp_info.libdirs[0], self.build_folder)
+                if self.settings.os == "Linux":
+                    copy(self, "*.a", dep.cpp_info.bindirs[0], self.build_folder)
+                elif self.settings.os == "Windows":
+                    copy(self, "*.lib", dep.cpp_info.bindirs[0], self.build_folder)
 
     def build(self):
         cmake = CMake(self)

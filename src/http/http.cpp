@@ -133,6 +133,9 @@ void Http::listen_internal()
         text_parse.set("port", Config::get_host().m_port);
         text_parse.set("type2", 1);
 
+        spdlog::info("Returned:");
+        spdlog::info("\t{}", text_parse.get_all_raw());
+
         res.set_content(text_parse.get_all_raw(), "text/html");
         return true;
     });

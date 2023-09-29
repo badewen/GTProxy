@@ -35,7 +35,7 @@ public:
         return tokens;
     }
 
-    std::string get(const std::string& key, int index, const std::string_view& token = "|", int key_index = 0)
+    [[nodiscard]] std::string get(const std::string& key, int index, const std::string_view& token = "|", int key_index = 0) const
     {
         if (m_data.empty()) {
             return {};
@@ -60,19 +60,19 @@ public:
     }
 
     template <typename T, typename std::enable_if_t<std::is_signed_v<T>, bool> = true>
-    T get(const std::string& key, int index, const std::string_view& token = "|")
+    T get(const std::string& key, int index, const std::string_view& token = "|") const
     {
         return std::stoi(get(key, index, token));
     }
 
     template <typename T, typename std::enable_if_t<std::is_unsigned_v<T>, bool> = true>
-    T get(const std::string& key, int index, const std::string_view& token = "|")
+    T get(const std::string& key, int index, const std::string_view& token = "|") const
     {
         return std::stoul(get(key, index, token));
     }
 
     template <typename T, typename std::enable_if_t<std::is_floating_point_v<T>, bool> = true>
-    T get(const std::string& key, int index, const std::string_view& token = "|")
+    T get(const std::string& key, int index, const std::string_view& token = "|") const
     {
         if (std::is_same_v<T, double>) {
             return std::stod(get(key, index, token));
@@ -130,7 +130,7 @@ public:
         }), m_data.end());
     }
 
-    std::vector<std::string> get_all_array()
+    [[nodiscard]] std::vector<std::string> get_all_array() const
     {
         std::vector<std::string> ret{};
         for (int i = 0; i < m_data.size(); i++) {
@@ -140,7 +140,7 @@ public:
         return ret;
     }
 
-    std::string get_all_raw()
+    [[nodiscard]] std::string get_all_raw() const
     {
         std::string string{};
         for (auto it = m_data.cbegin(); it != m_data.cend(); ++it) {
@@ -176,6 +176,13 @@ public:
 
     void add_key(const std::string &key) {
         m_data.push_back(key);
+    }
+
+    void concat(const TextParse& text_parse) {
+        std::vector<std::string> text_parse_vector = text_parse.get_all_array();
+        for (auto& str : text_parse_vector) {
+            m_data.push_back(str);
+        }
     }
 
 public:

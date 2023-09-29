@@ -12,6 +12,7 @@ public:
     ~Peer();
 
     static ENetPacket* build_packet(eNetMessageType type, const std::vector<uint8_t>& data);
+    static ENetPacket* build_packet(eNetMessageType type, const std::string&& data);
     static ENetPacket* build_raw_packet(GameUpdatePacket *game_update_packet,
                                         eNetMessageType type = eNetMessageType::NET_MESSAGE_GAME_PACKET,
                                         std::size_t length = sizeof(GameUpdatePacket),
@@ -34,6 +35,7 @@ public:
     enet_uint32 get_connect_id() const { return m_peer->connectID; }
     void disconnect() const { enet_peer_disconnect(m_peer, 0); }
     void disconnect_now() const { enet_peer_disconnect_now(m_peer, 0); }
+    ENetPeer* get_raw_peer() const { return m_peer; }
 
 private:
     ENetPeer* m_peer;

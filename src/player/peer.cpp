@@ -7,17 +7,10 @@ namespace player {
 Peer::Peer(ENetPeer* peer)
     : m_peer{ peer }
 {
-    static randutils::pcg_rng rng{ utils::random::get_generator_local() };
-    std::string uid{ utils::random::generate_unicode(rng, 32) };
-
-    m_peer->data = new std::uint8_t[32];
-    std::memcpy(m_peer->data, &uid[0], uid.length());
 }
 
 Peer::~Peer()
 {
-    delete reinterpret_cast<uint8_t*>(m_peer->data);
-    m_peer->data = nullptr;
 }
 
 ENetPacket* Peer::build_packet(eNetMessageType type, const std::vector<uint8_t>& data)
@@ -30,13 +23,17 @@ ENetPacket* Peer::build_packet(eNetMessageType type, const std::vector<uint8_t>&
     return packet;
 }
 
+ENetPacket* Peer::build_packet(eNetMessageType type, const std::string&& data) {
+    return build_packet(type, std::vector<uint8_t>{ data.begin(), data.end() });
+}
+
 int Peer::send_packet(eNetMessageType type, const std::string& data)
 {
     if (!m_peer) {
         return -1;
     }
 
-    return send_packet_packet( build_packet(type, { data.begin(), data.end() }) );
+    return send_packet_packet( build_packet(type, std::move(data)) );
 }
 
 int Peer::send_packet_packet(ENetPacket* packet)

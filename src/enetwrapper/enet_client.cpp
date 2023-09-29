@@ -6,6 +6,7 @@ namespace enet_wrapper {
 ENetClient::ENetClient()
     : m_host(nullptr)
     , m_peer(nullptr)
+    , m_peer_wrapper {}
 {
     m_running.store(false);
 }
@@ -46,6 +47,11 @@ void ENetClient::destroy_host()
         enet_host_destroy(m_host);
         m_host = nullptr;
     }
+
+    if (m_peer_wrapper) {
+        delete m_peer_wrapper;
+        m_peer_wrapper = nullptr;
+    }
 }
 
 bool ENetClient::connect(const std::string& host, enet_uint16 port, enet_uint32 connect_id)
@@ -63,6 +69,8 @@ bool ENetClient::connect(const std::string& host, enet_uint16 port, enet_uint32 
         return false;
     }
 
+    if (m_peer_wrapper) delete m_peer_wrapper;
+    m_peer_wrapper = new player::Peer(m_peer);
     return true;
 }
 
@@ -81,6 +89,8 @@ void ENetClient::service_thread()
 {
     ENetEvent event{};
     while (m_running.load()) {
+        on_service_loop();
+
         while (m_host && enet_host_service(m_host, &event, 8) > 0) {
             switch (event.type) {
                 case ENET_EVENT_TYPE_CONNECT:

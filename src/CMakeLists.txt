@@ -21,7 +21,7 @@ file(GLOB GTPROXY_SOURCE_FILES
 
 add_executable(${PROJECT_NAME}
     ${GTPROXY_INCLUDE_FILES}
-    ${GTPROXY_SOURCE_FILES})
+    ${GTPROXY_SOURCE_FILES} client/client_handle_incoming.cpp client/client_handle_outgoing.cpp utils/login_spoof_data.h)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     C_STANDARD 11
@@ -36,7 +36,7 @@ endif ()
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/proton/shared
-    ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/eventpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC
     NOMINMAX

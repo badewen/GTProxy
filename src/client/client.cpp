@@ -10,8 +10,9 @@ namespace client {
 Client::Client(server::Server* server)
     : enet_wrapper::ENetClient{}
     , m_proxy_server { server }
-    , m_packet_queue {10}
+    , m_packet_queue {3}
 {
+    spdlog::debug("NEW CLIENT CLASS IS CREATED");
 }
 
 Client::~Client() = default;

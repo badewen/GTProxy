@@ -6,6 +6,7 @@
 namespace server {
 Server::Server()
     : enet_wrapper::ENetServer{}
+    , m_client_pool{}
 {
     m_client_map = {};
 }
@@ -31,7 +32,20 @@ void Server::on_connect(ENetPeer* peer)
     spdlog::info("New client connected to proxy server.");
 
     auto gt_client = new player::Peer{ peer };
-    auto server_client = new client::Client{ this };
+    client::Client* server_client {};
+
+    for (auto& client : m_client_pool) {
+        if (client->is_ctx_empty()) {
+            server_client = client.get();
+        }
+    }
+
+    if (!server_client) {
+        auto temp = std::make_shared<client::Client>(this);
+        server_client = temp.get();
+        m_client_pool.push_back(temp);
+    }
+
 
     m_client_map.emplace(gt_client, server_client);
     m_gt_client_map.emplace(peer, gt_client);
@@ -110,13 +124,11 @@ void Server::on_disconnect(ENetPeer* peer)
     }
 
     player::Peer* gt_client = get_gt_client_by_raw_peer(peer);
-    client::Client* server_client = get_client_by_peer(gt_client);
 
     m_gt_client_map.erase(peer);
     m_client_map.erase(gt_client);
 
     delete gt_client;
-    delete server_client;
 }
 
 player::Peer* Server::get_peer_by_client(client::Client *key) {

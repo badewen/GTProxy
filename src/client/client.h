@@ -52,7 +52,9 @@ public:
 
 public:
     bool is_valid() { return m_peer_wrapper && m_peer_wrapper->is_connected(); }
+    bool is_ctx_empty() { return !m_ctx; }
     void queue_packet(ENetPacket* packet, bool is_outgoing) { m_packet_queue.enqueue({packet, is_outgoing }); }
+
 
 private:
     server::Server* m_proxy_server;

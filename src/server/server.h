@@ -48,8 +48,7 @@ private:
     // Peer is the growtopia client
     // Client is the "client" that interface directly with growtopia server.
 
-    // TODO : Cache server client and only start it with context instead of creating and destroying at every reconnection
-    //        And store it in a list of created server client.
+    std::vector<std::shared_ptr<client::Client>> m_client_pool;
 
     std::unordered_map<player::Peer*, client::Client*> m_client_map;
 

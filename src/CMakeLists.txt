@@ -21,7 +21,7 @@ file(GLOB GTPROXY_SOURCE_FILES
 
 add_executable(${PROJECT_NAME}
     ${GTPROXY_INCLUDE_FILES}
-    ${GTPROXY_SOURCE_FILES} client/client_handle_incoming.cpp client/client_handle_outgoing.cpp utils/login_spoof_data.h)
+    ${GTPROXY_SOURCE_FILES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     C_STANDARD 11

@@ -13,6 +13,7 @@ namespace server {
 std::unique_ptr<httplib::Server> Http::s_server {};
 httplib::Headers Http::s_last_headers {};
 httplib::Params Http::s_last_params {};
+std::unordered_map<std::string, utils::TextParse> Http::ServerDataCache {};
 
 void Http::Init()
 {
@@ -129,12 +130,12 @@ void Http::listen_internal()
         s_last_params = req.params;
 
         utils::TextParse text_parse{ get_server_data() };
+        ServerDataCache.insert_or_assign(text_parse.get("meta", 1), text_parse);
+        spdlog::info("Returned:");
+        spdlog::info("\t{}", text_parse.get_all_raw());
         text_parse.set("server", "127.0.0.1");
         text_parse.set("port", Config::get_host().m_port);
         text_parse.set("type2", 1);
-
-        spdlog::info("Returned:");
-        spdlog::info("\t{}", text_parse.get_all_raw());
 
         res.set_content(text_parse.get_all_raw(), "text/html");
         return true;

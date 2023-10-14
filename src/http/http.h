@@ -3,6 +3,7 @@
 #include <httplib/httplib.h>
 
 #include "../config.h"
+#include "../utils/text_parse.h"
 
 namespace server {
 class Http {
@@ -18,6 +19,11 @@ private:
 
 public:
     static std::string get_server_data();
+
+public:
+    // key = meta
+    // value = server data requested from the official http server.
+    static std::unordered_map<std::string, utils::TextParse> ServerDataCache;
 
 private:
     static std::unique_ptr<httplib::Server> s_server;

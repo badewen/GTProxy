@@ -7,7 +7,7 @@
 namespace utils {
 class TextParse {
 public:
-    TextParse() = delete;
+    TextParse() = default;
     ~TextParse() = default;
 
     explicit TextParse(const std::string& string)

@@ -33,7 +33,7 @@ The following dependencies are required to build from source:
 - [Conan, the C/C++ Package Manager](https://conan.io) (v2.0+).
 
 To build from source:
-1. Clone the source code of this project: `git clone --recurse-submodules https://github.com/ZTzTopia/GTProxy.git`
+1. Clone the source code of this project: `git clone --recurse-submodules https://github.com/badewen/GTProxy`
 2. Install Python 3.5+ (Windows only: select 'Add Python to PATH' in installer)
 3. CMake will install needed package with Conan. `pip install "conan>2.0"`
 ```shell

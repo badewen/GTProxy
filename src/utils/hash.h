@@ -1,9 +1,13 @@
 #pragma once
 #include <string_view>
+#include <algorithm>
+
+#include <openssl/evp.h>
+#include <openssl/sha.h>
 
 namespace utils {
 namespace hash {
-constexpr std::size_t fnv1a(const std::string_view& data)
+static constexpr std::size_t fnv1a(const std::string_view& data)
 {
     // Fowler/Noll/Vo 1a variant.
     std::size_t prime{ 16777619U };
@@ -24,7 +28,7 @@ constexpr std::size_t fnv1a(const std::string_view& data)
     return hash;
 }
 
-constexpr std::int32_t proton(const char* data, std::size_t length = 0)
+static constexpr std::int32_t proton(const char* data, std::size_t length = 0)
 {
     std::int32_t hash{ 0x55555555 };
     if (data) {
@@ -43,15 +47,55 @@ constexpr std::int32_t proton(const char* data, std::size_t length = 0)
 
     return hash;
 }
+
+// copied from https://github.com/Nuron-bit/KLV-Generator
+static std::string sha256(const std::string& input) {
+    std::array<unsigned char, SHA256_DIGEST_LENGTH> digest{};
+
+    SHA256_CTX ctx{};
+    SHA256_Init(&ctx);
+    SHA256_Update(&ctx, input.data(), input.length());
+    SHA256_Final(digest.data(), &ctx);
+
+    std::string sha256{};
+
+    sha256.reserve(SHA256_DIGEST_LENGTH * 2);
+    for (int i{ 0 }; i < SHA256_DIGEST_LENGTH; i++) {
+        sha256 += fmt::format("{:02x}", digest[i]);
+    }
+    return sha256;
+}
+
+// copied from https://github.com/Nuron-bit/KLV-Generator
+static std::string md5(const std::string& input) {
+    unsigned char digest[EVP_MAX_MD_SIZE];
+    unsigned int digest_len;
+
+    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+    EVP_DigestInit_ex(ctx, EVP_md5(), nullptr);
+    EVP_DigestUpdate(ctx, input.c_str(), input.length());
+    EVP_DigestFinal_ex(ctx, digest, &digest_len);
+    EVP_MD_CTX_free(ctx);
+
+    char md5string[33];
+    for (int i = 0; i < 16; i++) {
+        sprintf(&md5string[i * 2], "%02x", (unsigned int)digest[i]);
+    }
+    md5string[32] = '\0';
+
+    std::string hash = std::string(md5string);
+    std::transform(hash.begin(), hash.end(), hash.begin(), ::toupper);
+    return hash;
+}
 }
 }
 
-constexpr std::size_t operator "" _fh(const char* str, std::size_t len)
+static constexpr std::size_t operator "" _fh(const char* str, std::size_t len)
 {
     return utils::hash::fnv1a(std::string_view{ str, len });
 }
 
-constexpr std::uint32_t operator "" _ph(const char* str, std::size_t len)
+static constexpr std::uint32_t operator "" _ph(const char* str, std::size_t len)
 {
     return utils::hash::proton(str, static_cast<std::uint32_t>(len));
 }

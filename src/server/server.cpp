@@ -6,7 +6,6 @@
 namespace server {
 Server::Server()
     : enet_wrapper::ENetServer{}
-    , m_login_spoof_data_map {}
 {
     m_client_map = {};
 }
@@ -37,13 +36,59 @@ void Server::on_connect(ENetPeer* peer)
     m_client_map.emplace(gt_client, server_client);
     m_gt_client_map.emplace(peer, gt_client);
 
-    server_client->start();
-    gt_client->send_packet_packet(player::Peer::build_packet(player::NET_MESSAGE_SERVER_HELLO, std::vector<uint8_t>{1}));
+    gt_client->send_packet(player::NET_MESSAGE_SERVER_HELLO, { 0 });
+    spdlog::debug("SENT SERVER HELLO PACKET");
 }
 
 void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
 {
+    player::eNetMessageType message_type{ player::get_message_type(packet) };
     player::Peer* gt_client = get_gt_client_by_raw_peer(peer);
+
+    if (message_type == player::NET_MESSAGE_GENERIC_TEXT) {
+        std::string message_data{ player::get_text(packet) };
+
+        if (message_data.find("requestedName") != std::string::npos) {
+            auto login_text_parse = utils::TextParse(message_data);
+
+            // generate a key for each unique connected client
+            auto generate_spoof_map_key = [](utils::TextParse parse) -> std::string {
+                return utils::hash::sha256(
+                        parse.get("klv", 1) +
+                        parse.get("requestedName", 1) +
+                        parse.get("tankIDName", 1) +
+                        parse.get("tankIDPass", 1)
+                );
+            };
+
+            // find the context
+            auto it = m_client_context_map.find(generate_spoof_map_key(login_text_parse));
+            std::shared_ptr<client::ClientContext> ctx {};
+
+            // if context is not found, create new one
+            if (it == m_client_context_map.end()) {
+                spdlog::debug("Creating new Context..");
+                ctx = std::make_shared<client::ClientContext>();
+
+                // this cant fail; else crash.
+                utils::TextParse http_data_text_parse = server::Http::ServerDataCache.at(login_text_parse.get("meta", 1));
+
+                ctx->RedirectIp     = http_data_text_parse.get("server", 1);
+                ctx->RedirectPort   = http_data_text_parse.get<enet_uint16>("port", 1);
+                ctx->LoginSpoofData = utils::LoginSpoofData::Generate();
+
+                m_client_context_map.insert_or_assign(generate_spoof_map_key(login_text_parse), ctx);
+            }
+            else { ctx = it->second; }
+
+            ctx->LoginData = login_text_parse.get_all_raw();
+
+            // start the server client.
+            spdlog::debug("Starting a new server client..");
+            get_client_by_peer(m_gt_client_map.at(peer))->start(ctx);
+            return;
+        }
+    }
 
     if (!is_gt_server_client_valid(gt_client)) {
         return;
@@ -65,8 +110,6 @@ void Server::on_disconnect(ENetPeer* peer)
 
     player::Peer* gt_client = get_gt_client_by_raw_peer(peer);
     client::Client* server_client = get_client_by_peer(gt_client);
-
-    if (server_client->is_redirected()) return;
 
     m_gt_client_map.erase(peer);
     m_client_map.erase(gt_client);
@@ -95,11 +138,6 @@ client::Client* Server::get_client_by_peer(player::Peer *key) {
         return nullptr;
     }
     return pos->second;
-}
-
-std::optional<utils::LoginSpoofData> Server::get_login_spoof_data(const std::string& key) {
-    auto found = m_login_spoof_data_map.find(key);
-    return found != m_login_spoof_data_map.end() ? std::optional<utils::LoginSpoofData>{found->second} : std::nullopt;
 }
 
 }

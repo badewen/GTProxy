@@ -18,23 +18,23 @@ public:
                                         std::size_t length = sizeof(GameUpdatePacket),
                                         std::uint8_t* extended_data = nullptr,
                                         enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE);
-    static ENetPacket* build_variant_packet(VariantList&& variant_list, std::uint32_t net_id, enet_uint32 flags);
+    static ENetPacket* build_variant_packet(VariantList&& variant_list, std::int32_t net_id, enet_uint32 flags);
 
     int send_packet(eNetMessageType type, const std::string& data);
-    int send_packet_packet(ENetPacket* packet);
+    int send_packet_packet(ENetPacket* packet, bool destroy_packet = false);
     int send_raw_packet(GameUpdatePacket *game_update_packet,
                     eNetMessageType type = eNetMessageType::NET_MESSAGE_GAME_PACKET,
                     std::size_t length = sizeof(GameUpdatePacket),
                     std::uint8_t* extended_data = nullptr,
                     enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE);
 
-    int send_variant(VariantList&& variant_list, std::uint32_t net_id = -1, enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE);
+    int send_variant(VariantList&& variant_list, std::int32_t net_id = -1, enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE);
 
 public:
     [[nodiscard]] bool is_connected() const { return m_peer->state == ENET_PEER_STATE_CONNECTED; }
     enet_uint32 get_connect_id() const { return m_peer->connectID; }
-    void disconnect() const { enet_peer_disconnect(m_peer, 0); }
-    void disconnect_now() const { enet_peer_disconnect_now(m_peer, 0); }
+    void disconnect() const { m_peer ? enet_peer_disconnect(m_peer, 0) : (void)0; }
+    void disconnect_now() const { m_peer ? enet_peer_disconnect_now(m_peer, 0) : (void)0; }
     ENetPeer* get_raw_peer() const { return m_peer; }
 
 private:

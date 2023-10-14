@@ -98,7 +98,7 @@ enum ePacketFlag : std::uint32_t {
 struct GameUpdatePacket {
     ePacketType type;
     std::uint8_t pad[3];
-    std::uint32_t net_id;
+    std::int32_t net_id;
     std::uint8_t pad_2[4];
 
     union {

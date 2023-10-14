@@ -19,8 +19,7 @@ ENetPacket* Peer::build_packet(eNetMessageType type, const std::vector<uint8_t>&
     std::memcpy(packet_data.data(), &type, sizeof(type));
     std::memcpy(packet_data.data() + sizeof(type), data.data(), data.size());
 
-    ENetPacket* packet{ enet_packet_create(packet_data.data(), packet_data.size(), ENET_PACKET_FLAG_RELIABLE) };
-    return packet;
+    return enet_packet_create(packet_data.data(), packet_data.size(), ENET_PACKET_FLAG_RELIABLE);
 }
 
 ENetPacket* Peer::build_packet(eNetMessageType type, const std::string&& data) {
@@ -36,7 +35,7 @@ int Peer::send_packet(eNetMessageType type, const std::string& data)
     return send_packet_packet( build_packet(type, std::move(data)) );
 }
 
-int Peer::send_packet_packet(ENetPacket* packet)
+int Peer::send_packet_packet(ENetPacket* packet, bool destroy_packet)
 {
     if (!m_peer) {
         return -1;
@@ -44,7 +43,7 @@ int Peer::send_packet_packet(ENetPacket* packet)
     send_lock.lock();
     int ret = enet_peer_send(m_peer, 0, packet);
     send_lock.unlock();
-    if (ret != 0) {
+    if (ret != 0 || destroy_packet) {
         enet_packet_destroy(packet);
     }
 
@@ -88,7 +87,7 @@ Peer::send_raw_packet(GameUpdatePacket *game_update_packet, eNetMessageType type
     return send_packet_packet(build_raw_packet(game_update_packet));
 }
 
-ENetPacket* Peer::build_variant_packet(VariantList&& variant_list, std::uint32_t net_id, enet_uint32 flags)
+ENetPacket* Peer::build_variant_packet(VariantList&& variant_list, std::int32_t net_id, enet_uint32 flags)
 {
     if (variant_list.Get(0).GetType() == eVariantType::TYPE_UNUSED) {
         return nullptr;
@@ -107,7 +106,7 @@ ENetPacket* Peer::build_variant_packet(VariantList&& variant_list, std::uint32_t
                             data.get(), flags);
 }
 
-int Peer::send_variant(VariantList&& variant_list, std::uint32_t net_id, enet_uint32 flags)
+int Peer::send_variant(VariantList&& variant_list, std::int32_t net_id, enet_uint32 flags)
 {
     return send_packet_packet(build_variant_packet(std::move(variant_list), net_id, flags));
 }

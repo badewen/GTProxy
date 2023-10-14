@@ -16,12 +16,13 @@ class Server;
 }
 
 namespace client {
-// more of a redirect data. but to simplify things.
+
 struct ClientContext {
     std::string RedirectIp;
     enet_uint16 RedirectPort;
     utils::LoginSpoofData LoginSpoofData;
     std::string LoginData;
+    player::Peer* GtClientPeer;
 };
 
 class Client : public enet_wrapper::ENetClient {
@@ -55,8 +56,6 @@ public:
 
 private:
     server::Server* m_proxy_server;
-    // so we dont need to fetch it every single time.
-    player::Peer* m_gt_client;
 
     std::shared_ptr<ClientContext> m_ctx;
 

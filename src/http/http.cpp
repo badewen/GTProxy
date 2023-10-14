@@ -131,8 +131,10 @@ void Http::listen_internal()
 
         utils::TextParse text_parse{ get_server_data() };
         ServerDataCache.insert_or_assign(text_parse.get("meta", 1), text_parse);
-        spdlog::info("Returned:");
+
+        spdlog::info("Server Returned:");
         spdlog::info("\t{}", text_parse.get_all_raw());
+
         text_parse.set("server", "127.0.0.1");
         text_parse.set("port", Config::get_host().m_port);
         text_parse.set("type2", 1);

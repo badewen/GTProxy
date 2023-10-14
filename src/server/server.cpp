@@ -81,11 +81,12 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
             }
             else { ctx = it->second; }
 
-            ctx->LoginData = login_text_parse.get_all_raw();
+            ctx->LoginData      = login_text_parse.get_all_raw();
+            ctx->GtClientPeer   = gt_client;
 
             // start the server client.
             spdlog::debug("Starting a new server client..");
-            get_client_by_peer(m_gt_client_map.at(peer))->start(ctx);
+            get_client_by_peer(gt_client)->start(ctx);
             return;
         }
     }

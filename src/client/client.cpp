@@ -10,7 +10,6 @@ namespace client {
 Client::Client(server::Server* server)
     : enet_wrapper::ENetClient{}
     , m_proxy_server { server }
-    , m_gt_client {}
     , m_outgoing_packet_queue {10}
 {
 }
@@ -40,8 +39,6 @@ void Client::start(std::shared_ptr<ClientContext> new_ctx)
 void Client::on_connect(ENetPeer* peer)
 {
     spdlog::info("Connected to Growtopia server.");
-
-    m_gt_client = m_proxy_server->get_peer_by_client(this);
 }
 
 void Client::on_service_loop()
@@ -75,10 +72,10 @@ void Client::on_disconnect(ENetPeer* peer)
     while (m_outgoing_packet_queue.pop()) {}
 
     if (m_proxy_server->is_gt_client_valid(this)) {
-        m_gt_client->disconnect();
+        m_ctx->GtClientPeer->disconnect();
     }
 
-    m_gt_client = nullptr;
+    m_ctx->GtClientPeer = nullptr;
     m_peer_wrapper = nullptr;
     m_ctx = nullptr;
 }
@@ -166,6 +163,6 @@ void Client::send_to_gt_client(ENetPacket *packet) {
         }
     }
 
-    m_gt_client->send_packet_packet(packet);
+    m_ctx->GtClientPeer->send_packet_packet(packet);
 }
 }

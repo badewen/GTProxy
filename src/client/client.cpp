@@ -10,7 +10,7 @@ namespace client {
 Client::Client(server::Server* server)
     : enet_wrapper::ENetClient{}
     , m_proxy_server { server }
-    , m_outgoing_packet_queue {10}
+    , m_packet_queue {10}
 {
 }
 
@@ -43,13 +43,24 @@ void Client::on_connect(ENetPeer* peer)
 
 void Client::on_service_loop()
 {
-    ENetPacket* packet = nullptr;
+    std::tuple<ENetPacket*, bool> packet_tuple;
 
-    while (is_valid() && m_outgoing_packet_queue.try_dequeue(packet)) {
-        if (!process_outgoing_packet(packet)) {
-            continue;
+    while (is_valid() && m_packet_queue.try_dequeue(packet_tuple)) {
+        auto[packet, is_outgoing_packet] = packet_tuple;
+
+        if (is_outgoing_packet) {
+            if (!process_outgoing_packet(packet)) {
+                continue;
+            }
+            send_to_server(packet);
         }
-        send_to_server(packet);
+
+        else {
+            if (!process_incoming_packet(packet)) {
+                continue;
+            }
+            send_to_gt_client(packet);
+        }
     }
 }
 
@@ -59,17 +70,13 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
         return;
     }
 
-    if (!process_incoming_packet(packet)) {
-        return;
-    }
-
-    send_to_gt_client(packet);
+    queue_packet(packet, false);
 }
 
 void Client::on_disconnect(ENetPeer* peer)
 {
     spdlog::info("Disconnected from growtopia server.");
-    while (m_outgoing_packet_queue.pop()) {}
+    while (m_packet_queue.pop()) {}
 
     if (m_proxy_server->is_gt_client_valid(this)) {
         m_ctx->GtClientPeer->disconnect();
@@ -144,7 +151,7 @@ void Client::send_to_gt_client(ENetPacket *packet) {
             case player::ePacketType::PACKET_CALL_FUNCTION: {
                 VariantList variant_list{};
                 variant_list.SerializeFromMem(extended_data, static_cast<int>(game_update_packet->data_size));
-                spdlog::info("Incoming VariantList with netid {}:\n{}", -1,
+                spdlog::info("Incoming VariantList with netid {}:\n{}", game_update_packet->net_id,
                                 variant_list.GetContentsAsDebugString());
                 break;
             }

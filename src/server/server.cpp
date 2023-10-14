@@ -95,7 +95,7 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
         return;
     }
 
-    get_client_by_peer(gt_client)->queue_outgoing_packet(packet);
+    get_client_by_peer(gt_client)->queue_packet(packet, true);
 }
 
 void Server::on_disconnect(ENetPeer* peer)

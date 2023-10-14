@@ -52,14 +52,16 @@ public:
 
 public:
     bool is_valid() { return m_peer_wrapper && m_peer_wrapper->is_connected(); }
-    void queue_outgoing_packet(ENetPacket* packet) { m_outgoing_packet_queue.enqueue(packet); }
+    void queue_packet(ENetPacket* packet, bool is_outgoing) { m_packet_queue.enqueue({packet, is_outgoing }); }
 
 private:
     server::Server* m_proxy_server;
 
     std::shared_ptr<ClientContext> m_ctx;
 
-    moodycamel::ReaderWriterQueue<ENetPacket*> m_outgoing_packet_queue;
+    // bool = is outgoing packet
+    // why? to equalize the outgoing and incoming packet's priority ( I LOVE DEMOCRACY AND EQUAL RIGHT RAHHHHH -̶n̶o̶t̶ ̶b̶e̶i̶n̶g̶ ̶h̶e̶l̶d̶ ̶g̶u̶n̶p̶o̶i̶n̶t̶ ̶a̶t̶ )
+    moodycamel::ReaderWriterQueue<std::tuple<ENetPacket*, bool>> m_packet_queue;
 
 };
 }

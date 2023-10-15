@@ -28,10 +28,10 @@ public:
 
 public:
     std::string Spoofed_mac;
-    std::int32_t Spoofed_mac_hash;
     std::string Spoofed_rid;
     std::string Spoofed_wk;
     std::string Spoofed_device_id;
+    std::int32_t Spoofed_mac_hash;
     std::int32_t Spoofed_device_id_hash;
 
 };

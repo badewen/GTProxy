@@ -1,10 +1,14 @@
 #include "client.h"
 
+#include <chrono>
+
 #include <magic_enum.hpp>
 #include <proton/shared/klv.h>
 
 #include "../server/server.h"
 #include "../utils/text_parse.h"
+
+using namespace std::chrono_literals;
 
 namespace client {
 bool Client::process_incoming_packet(ENetPacket* packet)
@@ -14,13 +18,15 @@ bool Client::process_incoming_packet(ENetPacket* packet)
 
     switch (message_type) {
         case player::NET_MESSAGE_SERVER_HELLO: {
+            while ( this->m_ctx->IsLoginDataSent ) { std::this_thread::sleep_for(1ms); }
+
             utils::LoginSpoofData spoof_data = this->m_ctx->LoginSpoofData;
             utils::TextParse text_parse = utils::TextParse { this->m_ctx->LoginData };
 
             text_parse.add_key_once("klv|");
 
             text_parse.set("game_version", Config::get_server().m_game_version);
-            text_parse.set("protocol", Config::get_server().m_protocol);
+//            text_parse.set("protocol", Config::get_server().m_protocol);
             // text_parse.set("platformID", Config::m_server.platformID);
             text_parse.set("mac", spoof_data.Spoofed_mac);
             text_parse.set("rid", spoof_data.Spoofed_rid);
@@ -36,13 +42,10 @@ bool Client::process_incoming_packet(ENetPacket* packet)
                     )
             );
 
-            // have to fix this login packet, smh their budget for growtopia is 1 tortilla
-//            if (text_parse.get("doorID", 1).empty() && !text_parse.get("token", 1).empty() && text_parse.get("reconnect", 1).empty()) {
-//                text_parse.add("doorID", "0");
-//            }
-
             spdlog::debug("Received Hello packet, sending modified login data..");
             send_to_server(player::Peer::build_packet(player::NET_MESSAGE_GENERIC_TEXT, text_parse.get_all_raw()));
+
+            this->m_ctx->IsLoginDataSent = true;
 
             return false;
         }

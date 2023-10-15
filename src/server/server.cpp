@@ -76,27 +76,32 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
             };
 
             // find the context
-            auto it = m_client_context_map.find(generate_spoof_map_key(login_text_parse));
+            auto found_ctx = m_client_context_map.find(generate_spoof_map_key(login_text_parse));
             std::shared_ptr<client::ClientContext> ctx {};
 
             // if context is not found, create new one
-            if (it == m_client_context_map.end()) {
+            if (found_ctx == m_client_context_map.end()) {
                 spdlog::debug("Creating new Context..");
                 ctx = std::make_shared<client::ClientContext>();
 
-                // this cant fail; else crash.
-                utils::TextParse http_data_text_parse = server::Http::ServerDataCache.at(login_text_parse.get("meta", 1));
-
-                ctx->RedirectIp     = http_data_text_parse.get("server", 1);
-                ctx->RedirectPort   = http_data_text_parse.get<enet_uint16>("port", 1);
                 ctx->LoginSpoofData = utils::LoginSpoofData::Generate();
 
                 m_client_context_map.insert_or_assign(generate_spoof_map_key(login_text_parse), ctx);
             }
-            else { ctx = it->second; }
+            else { ctx = found_ctx->second; }
 
-            ctx->LoginData      = login_text_parse.get_all_raw();
-            ctx->GtClientPeer   = gt_client;
+            auto found_http_data = server::Http::ServerDataCache.find(login_text_parse.get("meta", 1));
+
+            if (found_http_data != server::Http::ServerDataCache.end()) {
+                ctx->RedirectIp     = found_http_data->second.get("server", 1);
+                ctx->RedirectPort   = found_http_data->second.get<enet_uint16>("port", 1);
+
+                server::Http::ServerDataCache.erase(login_text_parse.get("meta", 1));
+            }
+
+            ctx->LoginData          = login_text_parse.get_all_raw();
+            ctx->IsLoginDataSent    = false;
+            ctx->GtClientPeer       = gt_client;
 
             // start the server client.
             spdlog::debug("Starting a new server client..");

@@ -24,7 +24,7 @@ bool ENetServer::create_host(enet_uint16 port, std::size_t peer_count, enet_uint
     address.host = ENET_HOST_ANY;
     address.port = port;
 
-    m_host = enet_host_create(&address, peer_count, 2, 0, 0);
+    m_host = enet_host_create(&address, peer_count, 0, 0, 0);
     if (!m_host) {
         return false;
     }

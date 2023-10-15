@@ -22,7 +22,7 @@ bool ENetClient::create_host(std::size_t peer_count, enet_uint8 using_new_packet
         destroy_host();
     }
 
-    m_host = enet_host_create(nullptr, peer_count, 2, 0, 0);
+    m_host = enet_host_create(nullptr, peer_count, 0, 0, 0);
     if (!m_host) {
         return false;
     }
@@ -91,7 +91,7 @@ void ENetClient::service_thread()
     while (m_running.load()) {
         on_service_loop();
 
-        while (m_host && enet_host_service(m_host, &event, 8) > 0) {
+        while (m_host && enet_host_service(m_host, &event, 0) > 0) {
             switch (event.type) {
                 case ENET_EVENT_TYPE_CONNECT:
                     on_connect(event.peer);

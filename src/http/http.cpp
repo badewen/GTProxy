@@ -206,7 +206,7 @@ std::string Http::get_server_data()
 
     httplib::Headers header {
         {"User-Agent", get_header_value(s_last_headers, "User-Agent")},
-        {"Host", get_header_value(s_last_headers, "Host")}
+        {"Host", Config::get_server().m_host}
     };
 
     httplib::Result response{ cli.Post(

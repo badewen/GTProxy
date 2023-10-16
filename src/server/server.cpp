@@ -46,7 +46,6 @@ void Server::on_connect(ENetPeer* peer)
         m_client_pool.push_back(temp);
     }
 
-
     m_client_map.emplace(gt_client, server_client);
     m_gt_client_map.emplace(peer, gt_client);
 

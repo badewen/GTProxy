@@ -13,6 +13,7 @@ namespace server {
 std::unique_ptr<httplib::Server> Http::s_server {};
 httplib::Headers Http::s_last_headers {};
 httplib::Params Http::s_last_params {};
+std::string Http::s_last_content {};
 std::unordered_map<std::string, utils::TextParse> Http::ServerDataCache {};
 
 void Http::Init()
@@ -128,6 +129,7 @@ void Http::listen_internal()
 
         s_last_headers = req.headers;
         s_last_params = req.params;
+        s_last_content = req.body;
 
         utils::TextParse text_parse{ get_server_data() };
         ServerDataCache.insert_or_assign(text_parse.get("meta", 1), text_parse);
@@ -210,7 +212,8 @@ std::string Http::get_server_data()
     httplib::Result response{ cli.Post(
         "/growtopia/server_data.php",
         header,
-        s_last_params
+        s_last_content,
+        "application/x-www-form-urlencoded"
     ) };
     if (validate_server_response(response)) {
         if (!response->body.empty()) {

@@ -1,11 +1,12 @@
 #pragma once
 
+#include <concurrentqueue/concurrentqueue.h>
+
 #include "../config.h"
 #include "../enetwrapper/enet_client.h"
 #include "../player/peer.h"
 
 #include "../utils/hash.h"
-#include "rwqueue/readerwriterqueue.h"
 #include "../utils/randutils.hpp"
 #include "../utils/random.h"
 #include "../utils/text_parse.h"
@@ -64,7 +65,7 @@ private:
 
     // bool = is outgoing packet
     // why? to equalize the outgoing and incoming packet's priority ( I LOVE DEMOCRACY AND EQUAL RIGHT RAHHHHH -̶n̶o̶t̶ ̶b̶e̶i̶n̶g̶ ̶h̶e̶l̶d̶ ̶g̶u̶n̶p̶o̶i̶n̶t̶ ̶a̶t̶ )
-    moodycamel::ReaderWriterQueue<std::tuple<ENetPacket*, bool>> m_packet_queue;
+    moodycamel::ConcurrentQueue<std::tuple<ENetPacket*, bool>> m_packet_queue;
 
 };
 }

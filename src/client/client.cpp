@@ -77,7 +77,10 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
 void Client::on_disconnect(ENetPeer* peer)
 {
     spdlog::info("Disconnected from growtopia server.");
-    while (m_packet_queue.pop()) {}
+
+    // empty out
+    std::tuple<ENetPacket*, bool> temp;
+    while (m_packet_queue.try_dequeue(temp)) {}
 
     if (m_proxy_server->is_gt_client_valid(this)) {
         m_ctx->GtClientPeer->disconnect();

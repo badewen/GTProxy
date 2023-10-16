@@ -29,5 +29,6 @@ private:
     static std::unique_ptr<httplib::Server> s_server;
     static httplib::Headers s_last_headers;
     static httplib::Params s_last_params;
+    static std::string s_last_content;
 };
 }

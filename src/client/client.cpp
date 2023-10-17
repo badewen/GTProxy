@@ -5,12 +5,15 @@
 #include "../server/server.h"
 #include "../utils/text_parse.h"
 #include "enet/enet.h"
+#include "../utils/timer.h"
 
 namespace client {
 Client::Client(server::Server* server)
     : enet_wrapper::ENetClient{}
     , m_proxy_server { server }
     , m_packet_queue {3}
+    , m_curr_world {}
+    , m_curr_player {}
 {
     spdlog::debug("NEW CLIENT CLASS IS CREATED");
 }
@@ -44,23 +47,25 @@ void Client::on_connect(ENetPeer* peer)
 
 void Client::on_service_loop()
 {
-    std::tuple<ENetPacket*, bool> packet_tuple;
+    PacketInfo packet_info;
+    bool forward_packet = true;
 
-    while (is_valid() && m_packet_queue.try_dequeue(packet_tuple)) {
-        auto[packet, is_outgoing_packet] = packet_tuple;
+    while (is_valid() && m_packet_queue.try_dequeue(packet_info)) {
 
-        if (is_outgoing_packet) {
-            if (!process_outgoing_packet(packet)) {
-                continue;
-            }
-            send_to_server(packet);
+        if (!packet_info.Delay.IsDone()) { m_packet_queue.enqueue(packet_info); continue; }
+
+        if (packet_info.ShouldProcess) {
+            forward_packet = packet_info.IsOutgoing ? process_outgoing_packet(packet_info.Packet)
+                                                    : process_incoming_packet(packet_info.Packet);
         }
 
+        if (!forward_packet) continue;
+
+        if (packet_info.IsOutgoing) {
+            send_to_server(packet_info.Packet);
+        }
         else {
-            if (!process_incoming_packet(packet)) {
-                continue;
-            }
-            send_to_gt_client(packet);
+            send_to_gt_client(packet_info.Packet);
         }
     }
 }
@@ -79,12 +84,15 @@ void Client::on_disconnect(ENetPeer* peer)
     spdlog::info("Disconnected from growtopia server.");
 
     // empty out
-    std::tuple<ENetPacket*, bool> temp;
+    PacketInfo temp;
     while (m_packet_queue.try_dequeue(temp)) {}
 
     if (m_proxy_server->is_gt_client_valid(this)) {
         m_ctx->GtClientPeer->disconnect();
     }
+
+    this->m_curr_player.NetID = 0;
+    this->m_curr_player.PlayerName = "";
 
     m_ctx->GtClientPeer = nullptr;
     m_peer_wrapper = nullptr;
@@ -92,18 +100,18 @@ void Client::on_disconnect(ENetPeer* peer)
 }
 
 void Client::send_to_server(ENetPacket *packet) {
-    player::eNetMessageType message_type{ player::get_message_type(packet) };
+    packet::eNetMessageType message_type{packet::get_message_type(packet) };
 
     switch (message_type) {
-        case player::NET_MESSAGE_GAME_PACKET: {
-            player::GameUpdatePacket* game_update_packet = player::get_tank_packet(packet);
-            std::uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
+        case packet::NET_MESSAGE_GAME_PACKET: {
+            packet::GameUpdatePacket* game_update_packet = packet::get_tank_packet(packet);
+            std::uint8_t* extended_data{packet::get_extended_data(game_update_packet) };
             std::vector<std::uint8_t> extended_data_vector{ extended_data, extended_data + game_update_packet->data_size };
 
             spdlog::info(
                     "Outgoing TankUpdatePacket:\n [{}]{}{}",
                     game_update_packet->type,
-                    magic_enum::enum_name(static_cast<player::ePacketType>(game_update_packet->type)),
+                    magic_enum::enum_name(static_cast<packet::ePacketType>(game_update_packet->type)),
                     extended_data
                     ? fmt::format("\n > extended_data: {}", spdlog::to_hex(extended_data_vector))
                     : ""
@@ -112,7 +120,7 @@ void Client::send_to_server(ENetPacket *packet) {
         }
 
         default: {
-            std::string message_data{ player::get_text(packet) };
+            std::string message_data{packet::get_text(packet) };
             utils::TextParse text_parse{ message_data };
 
             if (!text_parse.empty()) {
@@ -131,10 +139,10 @@ void Client::send_to_server(ENetPacket *packet) {
 }
 
 void Client::send_to_gt_client(ENetPacket *packet) {
-    player::eNetMessageType message_type{ player::get_message_type(packet) };
+    packet::eNetMessageType message_type{packet::get_message_type(packet) };
 
-    if (message_type != player::NET_MESSAGE_GAME_PACKET) {
-        std::string message_data{ player::get_text(packet) };
+    if (message_type != packet::NET_MESSAGE_GAME_PACKET) {
+        std::string message_data{packet::get_text(packet) };
         utils::TextParse text_parse{ message_data };
         if (!text_parse.empty()) {
             spdlog::info(
@@ -145,14 +153,14 @@ void Client::send_to_gt_client(ENetPacket *packet) {
         }
     }
     else {
-        player::GameUpdatePacket* game_update_packet = player::get_tank_packet(packet);
+        packet::GameUpdatePacket* game_update_packet = packet::get_tank_packet(packet);
 
-        std::uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
+        std::uint8_t* extended_data{packet::get_extended_data(game_update_packet) };
         std::vector<std::uint8_t> extended_data_vector{ extended_data, extended_data + game_update_packet->data_size };
 
         switch (game_update_packet->type) {
 
-            case player::ePacketType::PACKET_CALL_FUNCTION: {
+            case packet::ePacketType::PACKET_CALL_FUNCTION: {
                 VariantList variant_list{};
                 variant_list.SerializeFromMem(extended_data, static_cast<int>(game_update_packet->data_size));
                 spdlog::info("Incoming VariantList with netid {}:\n{}", game_update_packet->net_id,
@@ -164,7 +172,7 @@ void Client::send_to_gt_client(ENetPacket *packet) {
                 spdlog::info(
                         "Incoming TankUpdatePacket:\n [{}]{}{}",
                         game_update_packet->type,
-                        magic_enum::enum_name(static_cast<player::ePacketType>(game_update_packet->type)),
+                        magic_enum::enum_name(static_cast<packet::ePacketType>(game_update_packet->type)),
                         extended_data
                         ? fmt::format("\n > extended_data: {}", spdlog::to_hex(extended_data_vector))
                         : ""

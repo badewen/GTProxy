@@ -6,7 +6,7 @@
 #include "enet/enet.h"
 #include <spdlog/spdlog.h>
 
-namespace player {
+namespace packet {
 enum eNetMessageType : std::uint32_t {
     NET_MESSAGE_UNKNOWN = 0,
     NET_MESSAGE_SERVER_HELLO,

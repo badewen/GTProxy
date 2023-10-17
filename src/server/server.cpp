@@ -31,7 +31,7 @@ void Server::on_connect(ENetPeer* peer)
 {
     spdlog::info("New client connected to proxy server.");
 
-    auto gt_client = new player::Peer{ peer };
+    auto gt_client = new player::Peer{peer };
     client::Client* server_client {};
 
     for (auto& client : m_client_pool) {
@@ -49,17 +49,17 @@ void Server::on_connect(ENetPeer* peer)
     m_client_map.emplace(gt_client, server_client);
     m_gt_client_map.emplace(peer, gt_client);
 
-    gt_client->send_packet(player::NET_MESSAGE_SERVER_HELLO, { 0 });
+    gt_client->send_packet(packet::NET_MESSAGE_SERVER_HELLO, {0 });
     spdlog::debug("SENT SERVER HELLO PACKET");
 }
 
 void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
 {
-    player::eNetMessageType message_type{ player::get_message_type(packet) };
+    packet::eNetMessageType message_type{packet::get_message_type(packet) };
     player::Peer* gt_client = get_gt_client_by_raw_peer(peer);
 
-    if (message_type == player::NET_MESSAGE_GENERIC_TEXT) {
-        std::string message_data{ player::get_text(packet) };
+    if (message_type == packet::NET_MESSAGE_GENERIC_TEXT) {
+        std::string message_data{packet::get_text(packet) };
 
         if (message_data.find("requestedName") != std::string::npos) {
             auto login_text_parse = utils::TextParse(message_data);
@@ -120,7 +120,7 @@ void Server::on_disconnect(ENetPeer* peer)
 {
     spdlog::info("Client disconnected from proxy server.");
 
-    player::Peer* server_client_peer = get_client_by_peer( get_gt_client_by_raw_peer(peer) )
+    player::Peer* server_client_peer = get_client_by_peer(get_gt_client_by_raw_peer(peer) )
                                             ->to_peer();
 
     if (server_client_peer && server_client_peer->is_connected()) {

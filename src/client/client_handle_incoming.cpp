@@ -13,21 +13,26 @@ using namespace std::chrono_literals;
 namespace client {
 bool Client::process_incoming_packet(ENetPacket* packet)
 {
-    player::eNetMessageType message_type{ player::get_message_type(packet) };
-//    std::string message_data{ player::get_text(packet) };
+    packet::eNetMessageType message_type{packet::get_message_type(packet) };
+//    std::string message_data{ packet::get_text(packet) };
 
     switch (message_type) {
-        case player::NET_MESSAGE_SERVER_HELLO: {
-            while ( this->m_ctx->IsLoginDataSent ) { std::this_thread::sleep_for(1ms); }
+        case packet::NET_MESSAGE_SERVER_HELLO: {
+            while (this->m_ctx->IsLoginDataSent) { std::this_thread::sleep_for(1ms); }
+
+            utils::TextParse text_parse = utils::TextParse{this->m_ctx->LoginData};
 
             utils::LoginSpoofData spoof_data = this->m_ctx->LoginSpoofData;
-            utils::TextParse text_parse = utils::TextParse { this->m_ctx->LoginData };
 
             text_parse.add_key_once("klv|");
 
-            text_parse.set("game_version", Config::get_server().m_game_version);
-//            text_parse.set("protocol", Config::get_server().m_protocol);
-            // text_parse.set("platformID", Config::m_server.platformID);
+            if (Config::get_misc().m_force_update_game_version) {
+                text_parse.set("game_version", Config::get_server().m_game_version);
+            }
+            if (Config::get_misc().m_force_update_protocol) {
+                text_parse.set("protocol", Config::get_server().m_protocol);
+            }
+            //  text_parse.set("platformID", Config::m_server.platformID);
             text_parse.set("mac", spoof_data.Spoofed_mac);
             text_parse.set("rid", spoof_data.Spoofed_rid);
             text_parse.set("wk", spoof_data.Spoofed_wk);
@@ -42,15 +47,15 @@ bool Client::process_incoming_packet(ENetPacket* packet)
                     )
             );
 
-            spdlog::debug("Received Hello packet, sending modified login data..");
-            send_to_server(player::Peer::build_packet(player::NET_MESSAGE_GENERIC_TEXT, text_parse.get_all_raw()));
+            spdlog::debug(std::string("Received Hello packet, sending ") + (Config::get_misc().m_force_update_game_version ? "modified" : "unmodified") + "login data..");
+            send_to_server(player::Peer::build_packet(packet::NET_MESSAGE_GENERIC_TEXT, text_parse.get_all_raw()));
 
             this->m_ctx->IsLoginDataSent = true;
 
             return false;
         }
-        case player::NET_MESSAGE_GAME_PACKET: {
-            player::GameUpdatePacket* game_update_packet{ player::get_tank_packet(packet) };
+        case packet::NET_MESSAGE_GAME_PACKET: {
+            packet::GameUpdatePacket* game_update_packet{packet::get_tank_packet(packet) };
             return process_incoming_raw_packet(game_update_packet);
         }
         default:
@@ -59,11 +64,11 @@ bool Client::process_incoming_packet(ENetPacket* packet)
     return true;
 }
 
-bool Client::process_incoming_raw_packet(player::GameUpdatePacket* game_update_packet)
+bool Client::process_incoming_raw_packet(packet::GameUpdatePacket* game_update_packet)
 {
     switch (game_update_packet->type) {
-        case player::PACKET_CALL_FUNCTION: {
-            std::uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
+        case packet::PACKET_CALL_FUNCTION: {
+            std::uint8_t* extended_data{packet::get_extended_data(game_update_packet) };
             if (!extended_data) {
                 break;
             }
@@ -71,16 +76,17 @@ bool Client::process_incoming_raw_packet(player::GameUpdatePacket* game_update_p
             variant_list.SerializeFromMem(extended_data, static_cast<int>(game_update_packet->data_size));
             return process_incoming_variant_list(&variant_list, game_update_packet->net_id);
         }
-//       case player::PACKET_SEND_MAP_DATA: {
-//           std::uint8_t* raw_world_data{ player::get_extended_data(game_update_packet) };
-//           if (!raw_world_data) {
-//               break;
-//           }
-//           std::vector<std::uint8_t> raw_world_data_vector{ raw_world_data, raw_world_data + game_update_packet->data_size };
-//
-//           event_manager::InvokeOnWorldEnter(raw_world_data_vector);
-//
-//       }
+       case packet::PACKET_SEND_MAP_DATA: {
+           std::uint8_t* raw_world_data{ packet::get_extended_data(game_update_packet) };
+           if (!raw_world_data) {
+               break;
+           }
+           std::vector<std::uint8_t> raw_world_data_vector{ raw_world_data, raw_world_data + game_update_packet->data_size };
+
+           m_curr_world.set_world_data(raw_world_data_vector);
+
+           return true;
+       }
         default:
             break;
     }
@@ -97,7 +103,7 @@ bool Client::process_incoming_variant_list(VariantList *packet, int32_t net_id) 
 
             spdlog::debug(packet->GetContentsAsDebugString());
 
-            send_to_gt_client( player::Peer::build_variant_packet({
+            send_to_gt_client(player::Peer::build_variant_packet({
                 "OnSendToServer",
                 Config::get_host().m_port,
                 packet->Get(2).GetINT32(),
@@ -119,12 +125,14 @@ bool Client::process_incoming_variant_list(VariantList *packet, int32_t net_id) 
         case "OnSpawn"_fh: {
             utils::TextParse text_parse{packet->Get(1).GetString() };
             if (text_parse.get("type", 1) == "local") {
+                this->m_curr_player.NetID = text_parse.get<int32_t>("netID", 1);
+
                 // Set mods zoom, country flag to JP
                 text_parse.set("country", "jp");
                 text_parse.set("mstate", 1);
                 packet->Get(1).Set(text_parse.get_all_raw());
                 send_to_gt_client(
-                    player::Peer::build_variant_packet(
+                        player::Peer::build_variant_packet(
                         std::move(*packet),
                         net_id,
                         ENET_PACKET_FLAG_RELIABLE
@@ -133,6 +141,17 @@ bool Client::process_incoming_variant_list(VariantList *packet, int32_t net_id) 
                 return false;
             }
         }
+
+        case "SetHasGrowID"_fh: {
+            this->m_curr_player.PlayerName = packet->Get(2).GetString();
+            return true;
+        }
+
+        case "OnSetClothing"_fh: {
+            send_to_gt_client_delayed(player::Peer::build_variant_packet(*packet, net_id, ENET_PACKET_FLAG_RELIABLE), 300);
+            return true;
+        }
+
         default:
             break;
     }

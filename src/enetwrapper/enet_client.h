@@ -4,7 +4,7 @@
 #include <memory>
 #include <atomic>
 #include <enet/enet.h>
-#include "../player/peer.h"
+#include "../peer/peer.h"
 
 namespace enet_wrapper {
 class ENetClient {

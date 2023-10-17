@@ -12,11 +12,11 @@
 namespace client {
 bool Client::process_outgoing_packet(ENetPacket* packet)
 {
-    player::eNetMessageType message_type{ player::get_message_type(packet) };
-    std::string message_data{ player::get_text(packet) };
+    packet::eNetMessageType message_type{packet::get_message_type(packet) };
+    std::string message_data{packet::get_text(packet) };
 
     switch (message_type) {
-        case player::NET_MESSAGE_GENERIC_TEXT: {
+        case packet::NET_MESSAGE_GENERIC_TEXT: {
             if (message_data.find("action|input") != std::string::npos) {
                 utils::TextParse text_parse{ message_data };
                 if (text_parse.get("text", 1).empty()) {
@@ -30,8 +30,8 @@ bool Client::process_outgoing_packet(ENetPacket* packet)
 
                 if (token[0] == Config::get_command().m_prefix + "warp") {
                     std::string world{token[1]};
-                    send_to_server( player::Peer::build_packet(
-                            player::eNetMessageType::NET_MESSAGE_GAME_MESSAGE,
+                    send_to_server(player::Peer::build_packet(
+                            packet::eNetMessageType::NET_MESSAGE_GAME_MESSAGE,
                             fmt::format("action|join_request\nname|{}\ninvitedWorld|0", world)
                     ));
                     return false;
@@ -82,7 +82,7 @@ bool Client::process_outgoing_packet(ENetPacket* packet)
             }
             break;
         }
-        case player::NET_MESSAGE_GAME_MESSAGE: {
+        case packet::NET_MESSAGE_GAME_MESSAGE: {
             if (message_data.find("action|quit") != std::string::npos && message_data.length() <= 15) {
                 m_ctx->GtClientPeer->disconnect();
                 m_peer_wrapper->disconnect();
@@ -90,8 +90,8 @@ bool Client::process_outgoing_packet(ENetPacket* packet)
 
             break;
         }
-        case player::NET_MESSAGE_GAME_PACKET: {
-            player::GameUpdatePacket* game_update_packet{ player::get_tank_packet(packet)  };
+        case packet::NET_MESSAGE_GAME_PACKET: {
+            packet::GameUpdatePacket* game_update_packet{packet::get_tank_packet(packet)  };
             return process_outgoing_raw_packet(game_update_packet);
         }
         default:
@@ -101,10 +101,10 @@ bool Client::process_outgoing_packet(ENetPacket* packet)
     return true;
 }
 
-bool Client::process_outgoing_raw_packet(player::GameUpdatePacket* game_update_packet)
+bool Client::process_outgoing_raw_packet(packet::GameUpdatePacket* game_update_packet)
 {
     switch (game_update_packet->type) {
-        case player::PACKET_DISCONNECT:
+        case packet::PACKET_DISCONNECT:
             m_ctx->GtClientPeer->disconnect_now();
             break;
         default:

@@ -3,7 +3,7 @@
 #include "../http/http.h"
 #include "../config.h"
 #include "../enetwrapper/enet_server.h"
-#include "../player/peer.h"
+#include "../peer/peer.h"
 #include "../client/client.h"
 #include "../utils/login_spoof_data.h"
 #include "../utils/hash.h"
@@ -53,7 +53,7 @@ private:
     std::unordered_map<player::Peer*, client::Client*> m_client_map;
 
     // ENetPeer is the raw peer received from the enet
-    // player::Peer is the layer abstraction of the raw peer.
+    // packet::Peer is the layer abstraction of the raw peer.
     // can be used to access m_client_map
     // INTERNAL USE ONLY.
     std::unordered_map<ENetPeer*, player::Peer*> m_gt_client_map;

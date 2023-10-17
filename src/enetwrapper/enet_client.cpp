@@ -87,8 +87,8 @@ void ENetClient::start_service()
 
 void ENetClient::service_thread()
 {
-    ENetEvent event{};
     while (m_running.load()) {
+        ENetEvent event{};
         on_service_loop();
 
         while (m_host && enet_host_service(m_host, &event, 2) > 0) {

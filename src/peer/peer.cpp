@@ -1,7 +1,10 @@
 #include <memory>
+#include <utility>
 
 #include "peer.h"
 #include "../utils/random.h"
+
+using namespace packet;
 
 namespace player {
 Peer::Peer(ENetPeer* peer)
@@ -22,7 +25,7 @@ ENetPacket* Peer::build_packet(eNetMessageType type, const std::vector<uint8_t>&
     return enet_packet_create(packet_data.data(), packet_data.size(), ENET_PACKET_FLAG_RELIABLE);
 }
 
-ENetPacket* Peer::build_packet(eNetMessageType type, const std::string&& data) {
+ENetPacket* Peer::build_packet(eNetMessageType type, const std::string& data) {
     return build_packet(type, std::vector<uint8_t>{ data.begin(), data.end() });
 }
 
@@ -32,7 +35,7 @@ int Peer::send_packet(eNetMessageType type, const std::string& data)
         return -1;
     }
 
-    return send_packet_packet( build_packet(type, std::move(data)) );
+    return send_packet_packet( build_packet(type, data) );
 }
 
 int Peer::send_packet_packet(ENetPacket* packet, bool destroy_packet)
@@ -43,7 +46,7 @@ int Peer::send_packet_packet(ENetPacket* packet, bool destroy_packet)
     send_lock.lock();
     int ret = enet_peer_send(m_peer, 0, packet);
     send_lock.unlock();
-    if (ret != 0 || destroy_packet) {
+    if (destroy_packet) {
         enet_packet_destroy(packet);
     }
 
@@ -87,7 +90,7 @@ Peer::send_raw_packet(GameUpdatePacket *game_update_packet, eNetMessageType type
     return send_packet_packet(build_raw_packet(game_update_packet));
 }
 
-ENetPacket* Peer::build_variant_packet(VariantList&& variant_list, std::int32_t net_id, enet_uint32 flags)
+ENetPacket* Peer::build_variant_packet(VariantList variant_list, std::int32_t net_id, enet_uint32 flags)
 {
     if (variant_list.Get(0).GetType() == eVariantType::TYPE_UNUSED) {
         return nullptr;
@@ -106,7 +109,7 @@ ENetPacket* Peer::build_variant_packet(VariantList&& variant_list, std::int32_t 
                             data.get(), flags);
 }
 
-int Peer::send_variant(VariantList&& variant_list, std::int32_t net_id, enet_uint32 flags)
+int Peer::send_variant(VariantList variant_list, std::int32_t net_id, enet_uint32 flags)
 {
     return send_packet_packet(build_variant_packet(std::move(variant_list), net_id, flags));
 }

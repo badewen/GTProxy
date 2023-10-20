@@ -1,0 +1,32 @@
+#pragma once
+
+#include <string>
+#include <utility>
+#include <unordered_map>
+
+#include <sigslot/signal.hpp>
+
+namespace utils {
+
+template<typename ...Params>
+class EventManager {
+public:
+
+    // c++ magic
+    // returns true if successful
+    template<typename ...FParams>
+    bool Register(std::string id, FParams&&... params) {
+        if (m_registered_event.find(id) != m_registered_event.end()) { return false; }
+        m_registered_event.insert_or_assign(id, m_event.connect(std::forward<FParams>(params)...));
+        return true;
+    }
+
+    void Remove(std::string id) { m_registered_event.erase(id); }
+
+    void Invoke(Params... params) { m_event(std::forward<Params>(params)...); }
+
+private:
+    sigslot::signal<Params...> m_event;
+    std::unordered_map<std::string, sigslot::connection> m_registered_event;
+};
+}

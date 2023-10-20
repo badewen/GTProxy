@@ -19,7 +19,7 @@ bool Client::process_incoming_packet(ENetPacket* packet)
     if (message_type != packet::NET_MESSAGE_GAME_PACKET) {
         bool forward_packet = true;
 
-        m_on_incoming_packet(packet, &forward_packet);
+        OnIncomingPacket.Invoke(packet, &forward_packet);
 
         if (!forward_packet) return false;
     }
@@ -77,7 +77,7 @@ bool Client::process_incoming_raw_packet(packet::GameUpdatePacket* game_update_p
     if (game_update_packet->type != packet::PACKET_CALL_FUNCTION) {
         bool forward_packet = true;
 
-        m_on_incoming_tank_packet(game_update_packet, &forward_packet);
+        OnIncomingTankPacket.Invoke(game_update_packet, &forward_packet);
 
         if (!forward_packet) return false;
     }
@@ -112,7 +112,7 @@ bool Client::process_incoming_variant_list(VariantList *packet, int32_t net_id) 
     std::size_t hash{ utils::hash::fnv1a(packet->Get(0).GetString()) };
 
     bool forward_packet = true;
-    m_on_incoming_varlist(packet, net_id, &forward_packet);
+    OnIncomingVarlist.Invoke(packet, net_id, &forward_packet);
     if (!forward_packet) return false;
 
     switch (hash) {

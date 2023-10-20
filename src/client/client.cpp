@@ -14,11 +14,12 @@ Client::Client(server::Server* server)
     , m_packet_queue {3}
     , m_curr_world {}
     , m_curr_player {}
-    , m_on_incoming_packet {}
-    , m_on_outgoing_packet {}
-    , m_on_incoming_tank_packet {}
-    , m_on_outgoing_tank_packet {}
-    , m_on_incoming_varlist {}
+    , OnIncomingPacket {}
+    , OnOutgoingPacket {}
+    , OnIncomingTankPacket {}
+    , OnOutgoingTankPacket {}
+    , OnIncomingVarlist {}
+    , m_command_manager { this }
 {
     spdlog::debug("NEW CLIENT CLASS IS CREATED");
 }

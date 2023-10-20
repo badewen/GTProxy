@@ -18,7 +18,7 @@ bool Client::process_outgoing_packet(ENetPacket* packet)
     if (message_type != packet::NET_MESSAGE_GAME_PACKET) {
         bool forward_packet = true;
 
-        m_on_outgoing_packet(packet, &forward_packet);
+        OnOutgoingPacket.Invoke(packet, &forward_packet);
 
         if (!forward_packet) return false;
     }
@@ -36,14 +36,16 @@ bool Client::process_outgoing_packet(ENetPacket* packet)
                         message_data.length() - message_data.find("text|") - 1
                 ), " " )};
 
-                if (token[0] == Config::get_command().m_prefix + "warp") {
-                    std::string world{token[1]};
-                    send_to_server(player::Peer::build_packet(
-                            packet::eNetMessageType::NET_MESSAGE_GAME_MESSAGE,
-                            fmt::format("action|join_request\nname|{}\ninvitedWorld|0", world)
-                    ));
-                    return false;
-                }
+                m_command_manager.ExecuteCommand(token[0], { std::next(token.begin()), token.end()});
+
+//                if (token[0] == Config::get_command().m_prefix + "warp") {
+//                    std::string world{token[1]};
+//                    send_to_server(player::Peer::build_packet(
+//                            packet::eNetMessageType::NET_MESSAGE_GAME_MESSAGE,
+//                            fmt::format("action|join_request\nname|{}\ninvitedWorld|0", world)
+//                    ));
+//                    return false;
+//                }
 //                else if (token[0] == Config::get_command().m_prefix + "save") {
 //                    std::string file_name{token[1]};
 //
@@ -112,7 +114,7 @@ bool Client::process_outgoing_packet(ENetPacket* packet)
 bool Client::process_outgoing_raw_packet(packet::GameUpdatePacket* game_update_packet)
 {
     bool forward_packet = true;
-    m_on_outgoing_tank_packet(game_update_packet, &forward_packet);
+    OnOutgoingTankPacket.Invoke(game_update_packet, &forward_packet);
     if (!forward_packet) return false;
 
     switch (game_update_packet->type) {

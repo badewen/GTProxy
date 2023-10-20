@@ -15,6 +15,8 @@
 #include "../world/world.h"
 #include "../player/player.h"
 #include "../utils/timer.h"
+#include "../utils/event_manager.h"
+#include "../commands/command_manager.h"
 
 namespace server {
 class Server;
@@ -69,9 +71,19 @@ public:
 public:
     bool is_valid() { return m_peer_wrapper && m_peer_wrapper->is_connected(); }
     bool is_ctx_empty() { return !m_ctx; }
+    std::shared_ptr<ClientContext> get_ctx() { return m_ctx; }
     void queue_packet(ENetPacket* packet, bool is_outgoing, bool should_process = true) { queue_packet_delayed(packet, is_outgoing, 0, should_process); }
     void queue_packet_delayed(ENetPacket* packet, bool is_outgoing, float delay_ms, bool should_process = true) {
         m_packet_queue.enqueue({packet, is_outgoing, should_process, delay_ms}); }
+
+public:
+    utils::EventManager<ENetPacket* /* packet */, bool* /* should_forward_packet */> OnIncomingPacket;
+    utils::EventManager<ENetPacket* /* packet */, bool* /* should_forward_packet */> OnOutgoingPacket;
+
+    utils::EventManager<packet::GameUpdatePacket* /* tank_packet */, bool* /* should_forward_packet */> OnIncomingTankPacket;
+    utils::EventManager<packet::GameUpdatePacket* /* tank_packet */, bool* /* should_forward_packet */> OnOutgoingTankPacket;
+
+    utils::EventManager<VariantList* /* varlist */, int32_t /* net_id */, bool*> OnIncomingVarlist;
 
 private:
     server::Server* m_proxy_server;
@@ -84,14 +96,6 @@ private:
 
     World m_curr_world;
     Player m_curr_player;
-
-    sigslot::signal<ENetPacket* /* packet */, bool* /* should_forward_packet */> m_on_incoming_packet;
-    sigslot::signal<ENetPacket* /* packet */, bool* /* should_forward_packet */> m_on_outgoing_packet;
-
-    sigslot::signal<packet::GameUpdatePacket* /* tank_packet */, bool* /* should_forward_packet */> m_on_incoming_tank_packet;
-    sigslot::signal<packet::GameUpdatePacket* /* tank_packet */, bool* /* should_forward_packet */> m_on_outgoing_tank_packet;
-
-    sigslot::signal<VariantList* /* varlist */, int32_t /* net_id */, bool*> m_on_incoming_varlist;
-
+    command::CommandManager m_command_manager;
 };
 }

@@ -1,16 +1,20 @@
 #pragma once
 
+#include <utility>
 #include <vector>
 #include <string>
 
-#include "../client/client.h"
-
 #include "../network/packet.h"
+
+namespace client {
+    class Client;
+}
 
 namespace command {
 class CommandBase {
 public:
-    CommandBase( std::vector<std::string> command_aliases ) : m_aliases {command_aliases} {}
+    explicit CommandBase( std::vector<std::string> command_aliases ) : m_aliases { std::move(command_aliases) } {}
+    virtual ~CommandBase() = default;
 
     virtual void Execute(client::Client* client, std::vector<std::string> args) = 0;
 

@@ -71,7 +71,11 @@ public:
 public:
     bool is_valid() { return m_peer_wrapper && m_peer_wrapper->is_connected(); }
     bool is_ctx_empty() { return !m_ctx; }
+
     std::shared_ptr<ClientContext> get_ctx() { return m_ctx; }
+    Player& get_local_player() { return m_curr_player; }
+    World& get_current_world() { return m_curr_world; }
+
     void queue_packet(ENetPacket* packet, bool is_outgoing, bool should_process = true) { queue_packet_delayed(packet, is_outgoing, 0, should_process); }
     void queue_packet_delayed(ENetPacket* packet, bool is_outgoing, float delay_ms, bool should_process = true) {
         m_packet_queue.enqueue({packet, is_outgoing, should_process, delay_ms}); }

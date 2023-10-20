@@ -36,59 +36,12 @@ bool Client::process_outgoing_packet(ENetPacket* packet)
                         message_data.length() - message_data.find("text|") - 1
                 ), " " )};
 
-                m_command_manager.ExecuteCommand(token[0], { std::next(token.begin()), token.end()});
-
-//                if (token[0] == Config::get_command().m_prefix + "warp") {
-//                    std::string world{token[1]};
-//                    send_to_server(player::Peer::build_packet(
-//                            packet::eNetMessageType::NET_MESSAGE_GAME_MESSAGE,
-//                            fmt::format("action|join_request\nname|{}\ninvitedWorld|0", world)
-//                    ));
-//                    return false;
-//                }
-//                else if (token[0] == Config::get_command().m_prefix + "save") {
-//                    std::string file_name{token[1]};
-//
-//                    FILE* f = NULL;
-//
-//                    fopen_s(&f, file_name.c_str(), "wb");
-//                    auto w_data = PlayerStateHandler::GetPlayerState().CurrentWorld.data;
-//                    fwrite(w_data.data(), 1, w_data.size(), f);
-//
-//                    fclose(f);
-//
-//                    return false;
-//                }
-            }
-            // this condition wont execute anymore, but better be safe
-            else if (message_data.find("requestedName") != std::string::npos) {
-                utils::TextParse text_parse{ message_data };
-
-                utils::LoginSpoofData spoof_data = this->m_ctx->LoginSpoofData;
-
-                text_parse.add_key_once("klv|");
-
-                text_parse.set("game_version", Config::get_server().m_game_version);
-                text_parse.set("protocol", Config::get_server().m_protocol);
-                // text_parse.set("platformID", Config::m_server.platformID);
-                text_parse.set("mac", spoof_data.Spoofed_mac);
-                text_parse.set("rid", spoof_data.Spoofed_rid);
-                text_parse.set("wk", spoof_data.Spoofed_wk);
-                text_parse.set("hash", spoof_data.Spoofed_device_id_hash);
-                text_parse.set("hash2", spoof_data.Spoofed_mac_hash);
-                text_parse.set(
-                        "klv",
-                        proton::generate_klv(
-                                text_parse.get<std::uint16_t>("protocol", 1),
-                                text_parse.get("game_version", 1),
-                                text_parse.get("rid", 1)
-                        )
-                );
-
-//                spdlog::debug("{}", text_parse.get_all_raw());
-
-                send_to_server(player::Peer::build_packet(message_type, text_parse.get_all_raw()));
-                return false;
+                if (token[0].starts_with(Config::get_command().m_prefix)) {
+                    m_command_manager.ExecuteCommand(token[0].substr(Config::get_command().m_prefix.length()),
+                                                     {std::next(token.begin()), token.end()}
+                    );
+                    return false;
+                }
             }
             break;
         }

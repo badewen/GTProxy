@@ -100,6 +100,8 @@ void Client::on_disconnect(ENetPeer* peer)
     this->m_curr_player.NetID = 0;
     this->m_curr_player.PlayerName = "";
 
+    this->m_curr_world.data.clear();
+
     m_ctx->GtClientPeer = nullptr;
     m_peer_wrapper = nullptr;
     m_ctx = nullptr;

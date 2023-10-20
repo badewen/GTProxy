@@ -1,5 +1,6 @@
 #pragma once
 
+#include <sigslot/signal.hpp>
 #include <concurrentqueue/concurrentqueue.h>
 
 #include "../config.h"
@@ -83,6 +84,14 @@ private:
 
     World m_curr_world;
     Player m_curr_player;
+
+    sigslot::signal<ENetPacket* /* packet */, bool* /* should_forward_packet */> m_on_incoming_packet;
+    sigslot::signal<ENetPacket* /* packet */, bool* /* should_forward_packet */> m_on_outgoing_packet;
+
+    sigslot::signal<packet::GameUpdatePacket* /* tank_packet */, bool* /* should_forward_packet */> m_on_incoming_tank_packet;
+    sigslot::signal<packet::GameUpdatePacket* /* tank_packet */, bool* /* should_forward_packet */> m_on_outgoing_tank_packet;
+
+    sigslot::signal<VariantList* /* varlist */, int32_t /* net_id */, bool*> m_on_incoming_varlist;
 
 };
 }

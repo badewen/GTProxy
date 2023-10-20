@@ -16,6 +16,14 @@ bool Client::process_incoming_packet(ENetPacket* packet)
     packet::eNetMessageType message_type{packet::get_message_type(packet) };
 //    std::string message_data{ packet::get_text(packet) };
 
+    if (message_type != packet::NET_MESSAGE_GAME_PACKET) {
+        bool forward_packet = true;
+
+        m_on_incoming_packet(packet, &forward_packet);
+
+        if (!forward_packet) return false;
+    }
+
     switch (message_type) {
         case packet::NET_MESSAGE_SERVER_HELLO: {
             while (this->m_ctx->IsLoginDataSent) { std::this_thread::sleep_for(1ms); }
@@ -66,6 +74,14 @@ bool Client::process_incoming_packet(ENetPacket* packet)
 
 bool Client::process_incoming_raw_packet(packet::GameUpdatePacket* game_update_packet)
 {
+    if (game_update_packet->type != packet::PACKET_CALL_FUNCTION) {
+        bool forward_packet = true;
+
+        m_on_incoming_tank_packet(game_update_packet, &forward_packet);
+
+        if (!forward_packet) return false;
+    }
+
     switch (game_update_packet->type) {
         case packet::PACKET_CALL_FUNCTION: {
             std::uint8_t* extended_data{packet::get_extended_data(game_update_packet) };
@@ -94,6 +110,10 @@ bool Client::process_incoming_raw_packet(packet::GameUpdatePacket* game_update_p
 }
 bool Client::process_incoming_variant_list(VariantList *packet, int32_t net_id) {
     std::size_t hash{ utils::hash::fnv1a(packet->Get(0).GetString()) };
+
+    bool forward_packet = true;
+    m_on_incoming_varlist(packet, net_id, &forward_packet);
+    if (!forward_packet) return false;
 
     switch (hash) {
         case "OnSendToServer"_fh: {

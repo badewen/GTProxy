@@ -15,6 +15,14 @@ bool Client::process_outgoing_packet(ENetPacket* packet)
     packet::eNetMessageType message_type{packet::get_message_type(packet) };
     std::string message_data{packet::get_text(packet) };
 
+    if (message_type != packet::NET_MESSAGE_GAME_PACKET) {
+        bool forward_packet = true;
+
+        m_on_outgoing_packet(packet, &forward_packet);
+
+        if (!forward_packet) return false;
+    }
+
     switch (message_type) {
         case packet::NET_MESSAGE_GENERIC_TEXT: {
             if (message_data.find("action|input") != std::string::npos) {
@@ -103,6 +111,10 @@ bool Client::process_outgoing_packet(ENetPacket* packet)
 
 bool Client::process_outgoing_raw_packet(packet::GameUpdatePacket* game_update_packet)
 {
+    bool forward_packet = true;
+    m_on_outgoing_tank_packet(game_update_packet, &forward_packet);
+    if (!forward_packet) return false;
+
     switch (game_update_packet->type) {
         case packet::PACKET_DISCONNECT:
             m_ctx->GtClientPeer->disconnect_now();

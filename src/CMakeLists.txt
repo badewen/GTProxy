@@ -57,6 +57,7 @@ find_package(magic_enum REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(pcg-cpp REQUIRED)
 find_package(spdlog REQUIRED)
+find_package(PalSigslot)
 
 target_link_libraries(${PROJECT_NAME}
     enet
@@ -66,7 +67,8 @@ target_link_libraries(${PROJECT_NAME}
     magic_enum::magic_enum
     nlohmann_json::nlohmann_json
     pcg-cpp::pcg-cpp
-    spdlog::spdlog)
+    spdlog::spdlog
+    Pal::Sigslot)
 
 # Copy dependencies binary to current binary dir.
 if (WIN32)

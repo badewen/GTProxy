@@ -102,6 +102,7 @@ void Client::on_disconnect(ENetPeer* peer)
 
     this->m_curr_world.data.clear();
 
+    m_ctx->IsConnected = false;
     m_ctx->GtClientPeer = nullptr;
     m_peer_wrapper = nullptr;
     m_ctx = nullptr;

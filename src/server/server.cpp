@@ -65,17 +65,16 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
             auto login_text_parse = utils::TextParse(message_data);
 
             // generate a key for each unique connected client
-            auto generate_spoof_map_key = [](utils::TextParse parse) -> std::string {
+            auto generate_context_key = [](utils::TextParse parse) -> std::string {
                 return utils::hash::sha256(
                         parse.get("klv", 1) +
                         parse.get("requestedName", 1) +
-                        parse.get("tankIDName", 1) +
-                        parse.get("tankIDPass", 1)
+                        parse.get("tankIDName", 1)
                 );
             };
 
             // find the context
-            auto found_ctx = m_client_context_map.find(generate_spoof_map_key(login_text_parse));
+            auto found_ctx = m_client_context_map.find(generate_context_key(login_text_parse));
             std::shared_ptr<client::ClientContext> ctx {};
 
             // if context is not found, create new one
@@ -85,9 +84,24 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
 
                 ctx->LoginSpoofData = utils::LoginSpoofData::Generate();
 
-                m_client_context_map.insert_or_assign(generate_spoof_map_key(login_text_parse), ctx);
+                m_client_context_map.insert_or_assign(generate_context_key(login_text_parse), ctx);
             }
-            else { ctx = found_ctx->second; }
+            else {
+                if (ctx->IsConnected) {
+                    gt_client->send_packet_packet(player::Peer::build_variant_packet(
+                            {"OnConsoleMessage",
+                             "[`2GTPROXY`0] `4Oops login can't proceed`0. It seems like the LoginData is the same, but the client hasn't diconnected yet."},
+                            -1, ENET_PACKET_FLAG_RELIABLE), true);
+
+                    gt_client->send_packet_packet(player::Peer::build_variant_packet(
+                            {"OnConsoleMessage",
+                             "[`2GTPROXY`0] if there are another connected guest account on the same device, try disconnecting it."},
+                            -1, ENET_PACKET_FLAG_RELIABLE), true);
+                    gt_client->disconnect_now();
+                    return;
+                }
+                ctx = found_ctx->second;
+            }
 
             auto found_http_data = server::Http::ServerDataCache.find(login_text_parse.get("meta", 1));
 
@@ -100,6 +114,7 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
 
             ctx->LoginData          = login_text_parse.get_all_raw();
             ctx->IsLoginDataSent    = false;
+            ctx->IsConnected        = true;
             ctx->GtClientPeer       = gt_client;
 
             // start the server client.

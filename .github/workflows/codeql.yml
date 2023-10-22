@@ -76,8 +76,8 @@ jobs:
     - run: |
         pip install "conan>2.0"
         conan profile detect -f
-        cmake -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGTPROXY_BUILD_VERSION=${{github.run_number}}
-        cmake --build ${{github.workspace}}\build --config ${{env.BUILD_TYPE}}
+        cmake -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=Debug -DGTPROXY_BUILD_VERSION=1.0.0
+        cmake --build ${{github.workspace}}\build --config Debug
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2

@@ -7,8 +7,10 @@
 #include "enet/enet.h"
 #include "../utils/timer.h"
 
+using namespace std::chrono_literals;
+
 namespace client {
-Client::Client(server::Server* server)
+Client::Client(server::Server* server, std::shared_ptr<BS::thread_pool> thread_pool)
     : enet_wrapper::ENetClient{}
     , m_proxy_server { server }
     , m_packet_queue {3}
@@ -19,7 +21,8 @@ Client::Client(server::Server* server)
     , OnIncomingTankPacket {}
     , OnOutgoingTankPacket {}
     , OnIncomingVarlist {}
-    , m_command_manager { this }
+    , m_thread_pool { thread_pool }
+    , m_command_manager { this, thread_pool }
 {
     spdlog::debug("NEW CLIENT CLASS IS CREATED");
 }
@@ -29,9 +32,11 @@ Client::~Client() = default;
 void Client::start(std::shared_ptr<ClientContext> new_ctx)
 {
     this->m_ctx = std::move(new_ctx);
-    if (!create_host(1, true)) {
-        spdlog::error("Failed to create ENet client host.");
-        return;
+    if (!m_host) {
+        if (!create_host(1, true)) {
+            spdlog::error("Failed to create ENet client host.");
+            return;
+        }
     }
 
     spdlog::info("Connecting to Growtopia server ({}:{}).", m_ctx->RedirectIp, m_ctx->RedirectPort);
@@ -43,7 +48,7 @@ void Client::start(std::shared_ptr<ClientContext> new_ctx)
         return;
     }
 
-    start_service();
+    run_service();
 }
 
 void Client::on_connect(ENetPeer* peer)
@@ -56,7 +61,7 @@ void Client::on_service_loop()
     PacketInfo packet_info;
     bool forward_packet = true;
 
-    while (is_valid() && m_packet_queue.try_dequeue(packet_info)) {
+    while (is_valid() && m_packet_queue.try_dequeue(packet_info) && m_ctx) {
 
         if (!packet_info.Delay.IsDone()) { m_packet_queue.enqueue(packet_info); continue; }
 
@@ -106,6 +111,8 @@ void Client::on_disconnect(ENetPeer* peer)
     m_ctx->GtClientPeer = nullptr;
     m_peer_wrapper = nullptr;
     m_ctx = nullptr;
+
+    m_running.store(false);
 }
 
 void Client::send_to_server(ENetPacket *packet) {
@@ -147,7 +154,7 @@ void Client::send_to_server(ENetPacket *packet) {
     m_peer_wrapper->send_packet_packet(packet);
 }
 
-void Client::send_to_gt_client(ENetPacket *packet) {
+void Client::send_to_gt_client(ENetPacket *packet, bool destroy_packet) {
     packet::eNetMessageType message_type{packet::get_message_type(packet) };
 
     if (message_type != packet::NET_MESSAGE_GAME_PACKET) {
@@ -191,6 +198,6 @@ void Client::send_to_gt_client(ENetPacket *packet) {
         }
     }
 
-    m_ctx->GtClientPeer->send_packet_packet(packet);
+    m_ctx->GtClientPeer->send_packet_packet(packet, destroy_packet);
 }
 }

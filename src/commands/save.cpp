@@ -6,7 +6,7 @@
 
 using namespace commands;
 
-void Save::Execute(client::Client* client, std::vector<std::string> args) {
+void Save::execute(client::Client* client, std::vector<std::string> args) {
     std::string file_name{args[0]};
 
     std::ofstream out_file {file_name, std::ios::binary};

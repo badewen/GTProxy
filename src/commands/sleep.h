@@ -1,11 +1,12 @@
-#pragma once
-
 #include "command_base.h"
 
+
+// debugging command
+
 namespace commands {
-class Warp : public command::CommandBase {
+class Sleep : public command::CommandBase {
 public:
-    Warp() : command::CommandBase( {"warp"} ) {}
+    Sleep() : command::CommandBase{ {"internal_sleep"}, true } {}
 
     void execute(client::Client* client, std::vector<std::string> args) override;
 };

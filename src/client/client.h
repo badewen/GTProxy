@@ -2,6 +2,7 @@
 
 #include <sigslot/signal.hpp>
 #include <concurrentqueue/concurrentqueue.h>
+#include <threadpool/include/BS_thread_pool.hpp>
 
 #include "../config.h"
 #include "../enetwrapper/enet_client.h"
@@ -43,7 +44,8 @@ struct PacketInfo {
 
 class Client : public enet_wrapper::ENetClient {
 public:
-    explicit Client(server::Server* server);
+    // thread_pool here is usually provided by server.cpp, because creating new thread pool is expensive.
+    explicit Client(server::Server* server, std::shared_ptr<BS::thread_pool> thread_pool);
     ~Client();
 
     // server's responsibility to fetch the right Context
@@ -65,7 +67,7 @@ public:
 
     void send_to_server(ENetPacket* packet);
     void send_to_server_delayed(ENetPacket* packet, float delay_ms) { queue_packet_delayed(packet, true, delay_ms, false); }
-    void send_to_gt_client(ENetPacket* packet);
+    void send_to_gt_client(ENetPacket* packet, bool destroy_packet = false);
     void send_to_gt_client_delayed(ENetPacket* packet, float delay_ms) { queue_packet_delayed(packet, false, delay_ms, false); };
 
 
@@ -92,6 +94,9 @@ public:
 
 private:
     server::Server* m_proxy_server;
+
+    // used for threaded command execution.
+    std::shared_ptr<BS::thread_pool> m_thread_pool;
 
     std::shared_ptr<ClientContext> m_ctx;
 

@@ -13,13 +13,17 @@ namespace client {
 namespace command {
 class CommandBase {
 public:
-    explicit CommandBase( std::vector<std::string> command_aliases ) : m_aliases { std::move(command_aliases) } {}
+    explicit CommandBase( std::vector<std::string> command_aliases, bool threaded = false)
+        : m_aliases { std::move(command_aliases) }
+        , IsThreaded { threaded } {}
+    CommandBase() = default;
     virtual ~CommandBase() = default;
 
-    virtual void Execute(client::Client* client, std::vector<std::string> args) = 0;
+    virtual void execute(client::Client* client, std::vector<std::string> args) = 0;
 
-    bool FindAlias(std::string alias) { return std::find(m_aliases.begin(), m_aliases.end(), alias) != m_aliases.end(); }
-
+    bool find_alias(const std::string& alias) { return std::find(m_aliases.begin(), m_aliases.end(), alias) != m_aliases.end(); }
+public:
+    bool IsThreaded;
 private:
     std::vector<std::string> m_aliases;
 };

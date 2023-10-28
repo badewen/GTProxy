@@ -7,6 +7,6 @@ class Save : public command::CommandBase {
 public:
     Save() : command::CommandBase( {"save", "save_world"} ) {}
 
-    void Execute(client::Client* client, std::vector<std::string> args) override;
+    void execute(client::Client* client, std::vector<std::string> args) override;
 };
 }

@@ -6,3 +6,6 @@
 	path = vendor/enet
 	url = https://github.com/badewen/gt-enet.git
 	branch = master
+[submodule "vendor/threadpool"]
+	path = vendor/threadpool
+	url = https://github.com/bshoshany/thread-pool.git

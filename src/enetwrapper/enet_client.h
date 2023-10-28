@@ -16,7 +16,7 @@ public:
     void destroy_host();
     bool connect(const std::string& host, enet_uint16 port, enet_uint32 connectID);
 
-    void start_service();
+    void run_service();
     void service_thread();
 
     virtual void on_connect(ENetPeer* peer) = 0;

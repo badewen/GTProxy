@@ -9,10 +9,27 @@ Server::Server()
     , m_client_pool{}
 {
     m_client_map = {};
+    m_thread_pool = std::make_shared<BS::thread_pool>();
+    spdlog::debug("NEW SERVER CLASS IS CREATED");
 }
 
 Server::~Server()
 {
+    for (auto& kv : m_gt_client_map) {
+        player::Peer* server_client_peer = get_client_by_peer(get_gt_client_by_raw_peer(kv.first) )
+                ->to_peer();
+
+        if (server_client_peer && server_client_peer->is_connected()) {
+            server_client_peer->disconnect();
+        }
+
+        player::Peer* gt_client = get_gt_client_by_raw_peer(kv.first);
+        gt_client->disconnect_now();
+
+        delete gt_client;
+    }
+
+    spdlog::debug("SERVER CLASS IS DESTROYED");
 }
 
 bool Server::start()
@@ -41,7 +58,7 @@ void Server::on_connect(ENetPeer* peer)
     }
 
     if (!server_client) {
-        auto temp = std::make_shared<client::Client>(this);
+        auto temp = std::make_shared<client::Client>(this, m_thread_pool);
         server_client = temp.get();
         m_client_pool.push_back(temp);
     }
@@ -49,8 +66,8 @@ void Server::on_connect(ENetPeer* peer)
     m_client_map.emplace(gt_client, server_client);
     m_gt_client_map.emplace(peer, gt_client);
 
-    gt_client->send_packet(packet::NET_MESSAGE_SERVER_HELLO, {0 });
-    spdlog::debug("SENT SERVER HELLO PACKET");
+    gt_client->send_packet(packet::NET_MESSAGE_SERVER_HELLO, { 0 });
+    spdlog::debug("SENT SERVER HELLO PACKET TO GT CLIENT");
 }
 
 void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
@@ -87,7 +104,9 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
                 m_client_context_map.insert_or_assign(generate_context_key(login_text_parse), ctx);
             }
             else {
+                ctx = found_ctx->second;
                 if (ctx->IsConnected) {
+                    spdlog::debug("SAME LOGIN DATA DETECTED");
                     gt_client->send_packet_packet(player::Peer::build_variant_packet(
                             {"OnConsoleMessage",
                              "[`2GTPROXY`0] `4Oops login can't proceed`0. It seems like the LoginData is the same, but the client hasn't diconnected yet."},
@@ -100,7 +119,6 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
                     gt_client->disconnect_now();
                     return;
                 }
-                ctx = found_ctx->second;
             }
 
             auto found_http_data = server::Http::ServerDataCache.find(login_text_parse.get("meta", 1));
@@ -119,7 +137,7 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
 
             // start the server client.
             spdlog::debug("Starting a new server client..");
-            get_client_by_peer(gt_client)->start(ctx);
+            m_thread_pool->push_task(&client::Client::start, get_client_by_peer(gt_client), ctx);
             return;
         }
     }

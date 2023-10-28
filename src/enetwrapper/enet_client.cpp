@@ -74,15 +74,14 @@ bool ENetClient::connect(const std::string& host, enet_uint16 port, enet_uint32 
     return true;
 }
 
-void ENetClient::start_service()
+void ENetClient::run_service()
 {
     if (m_running.load()) {
         return;
     }
 
     m_running.store(true);
-    std::thread thread{ &ENetClient::service_thread, this };
-    m_service_thread = std::move(thread);
+    service_thread();
 }
 
 void ENetClient::service_thread()
@@ -98,6 +97,8 @@ void ENetClient::service_thread()
                     break;
                 case ENET_EVENT_TYPE_RECEIVE:
                     on_receive(event.peer, event.packet);
+                    // this breaks. need to investigate
+//                    enet_packet_destroy(event.packet);
                     break;
                 case ENET_EVENT_TYPE_DISCONNECT:
                     on_disconnect(event.peer);

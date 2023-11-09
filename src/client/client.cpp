@@ -200,4 +200,15 @@ void Client::send_to_gt_client(ENetPacket *packet, bool destroy_packet) {
 
     m_ctx->GtClientPeer->send_packet_packet(packet, destroy_packet);
 }
+
+void Client::log_to_client(const std::string &message) {
+    if (!is_valid() && is_ctx_empty()) return;
+
+    send_to_gt_client( player::Peer::build_variant_packet({
+            "OnConsoleMessage",
+            fmt::format("[`2GTPROXY`o] {}", message)
+        }, -1, ENET_PACKET_FLAG_RELIABLE)
+    );
+}
+
 }

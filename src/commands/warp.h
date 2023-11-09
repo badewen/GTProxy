@@ -5,7 +5,7 @@
 namespace commands {
 class Warp : public command::CommandBase {
 public:
-    Warp() : command::CommandBase( {"warp"} ) {}
+    Warp() : command::CommandBase( {"warp"}, {"world_name"} ) {}
 
     void execute(client::Client* client, std::vector<std::string> args) override;
 };

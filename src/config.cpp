@@ -29,7 +29,7 @@ void Config::Init()
     // Initializes the configuration settings to default values.
     s_host.m_port = 16999;
     s_server.m_host = "www.growtopia1.com";
-    s_server.m_game_version = "4.37";
+    s_server.m_game_version = "4.4";
     s_server.m_protocol = 191;
     s_server.m_platform_id = "4";
     s_command.m_prefix = "!";

@@ -38,7 +38,8 @@ bool Client::process_outgoing_packet(ENetPacket* packet)
 
                 if (token[0].starts_with(Config::get_command().m_prefix)) {
                     m_command_manager.execute_command(token[0].substr(Config::get_command().m_prefix.length()),
-                                                      {std::next(token.begin()), token.end()}
+                                                      token.size() == 1 ? std::vector<std::string>{}
+                                                                        : std::vector<std::string>{std::next(token.begin()), token.end()}
                     );
                     return false;
                 }

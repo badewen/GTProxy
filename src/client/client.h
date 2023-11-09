@@ -70,6 +70,7 @@ public:
     void send_to_gt_client(ENetPacket* packet, bool destroy_packet = false);
     void send_to_gt_client_delayed(ENetPacket* packet, float delay_ms) { queue_packet_delayed(packet, false, delay_ms, false); };
 
+    void log_to_client(const std::string& message);
 
 public:
     bool is_valid() { return m_peer_wrapper && m_peer_wrapper->is_connected(); }

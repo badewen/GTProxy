@@ -7,10 +7,9 @@ Growtopia Proxy is a free and open-source proxy for [Growtopia](https://growtopi
 ## Goal
 - [ ] Scripting support
 - [ ] World serializer
-- [ ] Handle multiple connection
+- [x] Handle multiple connection
 - [ ] Friendly GUI 
 - [ ] Botting support
-- [ ] Rewrite (In progress)
 
 ## Supported Platforms
 - [Windows](https://www.microsoft.com/en-us/windows). Tested with Windows 7, 8, 10 and 11.
@@ -51,6 +50,7 @@ $ cmake --build .
 - [pcg-cpp](https://github.com/imneme/pcg-cpp): Random number generator
 - [randutils.hpp](https://gist.github.com/imneme/540829265469e673d045): Random utilities
 - [spdlog](https://github.com/gabime/spdlog): Fast C++ logging library
+
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](https://github.com/ZTzTopia/GTProxy/blob/main/LICENSE) file for details.

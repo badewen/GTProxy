@@ -1,9 +1,10 @@
 #pragma once
 
-#include "command_base.h"
 
 #include <memory>
 #include <threadpool/include/BS_thread_pool.hpp>
+
+#include "command_base.h"
 
 namespace command {
 class CommandManager {

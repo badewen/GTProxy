@@ -106,15 +106,15 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
             else {
                 ctx = found_ctx->second;
                 if (ctx->IsConnected) {
-                    spdlog::debug("SAME LOGIN DATA DETECTED");
+                    spdlog::warn("SAME LOGIN DATA DETECTED");
                     gt_client->send_packet_packet(player::Peer::build_variant_packet(
                             {"OnConsoleMessage",
-                             "[`2GTPROXY`0] `4Oops login can't proceed`0. It seems like the LoginData is the same, but the client hasn't diconnected yet."},
+                             "[`2GTPROXY`o] `4Oops login can't proceed`0. It seems like the LoginData is the same, but the client hasn't diconnected yet."},
                             -1, ENET_PACKET_FLAG_RELIABLE), true);
 
                     gt_client->send_packet_packet(player::Peer::build_variant_packet(
                             {"OnConsoleMessage",
-                             "[`2GTPROXY`0] if there are another connected guest account on the same device, try disconnecting it."},
+                             "[`2GTPROXY`o] if there are another connected guest account on the same device, try disconnecting it or login using a GrowID."},
                             -1, ENET_PACKET_FLAG_RELIABLE), true);
                     gt_client->disconnect_now();
                     return;

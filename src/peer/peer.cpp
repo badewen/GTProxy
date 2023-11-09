@@ -20,7 +20,7 @@ ENetPacket* Peer::build_packet(eNetMessageType type, const std::vector<uint8_t>&
 {
     std::vector<std::byte> packet_data(sizeof(type) + data.size());
     std::memcpy(packet_data.data(), &type, sizeof(type));
-    std::memcpy(packet_data.data() + sizeof(type), data.data(), data.size());
+    std::memcpy(packet_data.data() + sizeof(eNetMessageType), data.data(), data.size());
 
     return enet_packet_create(packet_data.data(), packet_data.size(), ENET_PACKET_FLAG_RELIABLE);
 }

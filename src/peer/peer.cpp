@@ -19,14 +19,16 @@ Peer::~Peer()
 ENetPacket* Peer::build_packet(eNetMessageType type, const std::vector<uint8_t>& data)
 {
     std::vector<std::byte> packet_data(sizeof(type) + data.size());
-    std::memcpy(packet_data.data(), &type, sizeof(type));
+    std::memcpy(packet_data.data(), &type, sizeof(eNetMessageType));
     std::memcpy(packet_data.data() + sizeof(eNetMessageType), data.data(), data.size());
 
     return enet_packet_create(packet_data.data(), packet_data.size(), ENET_PACKET_FLAG_RELIABLE);
 }
 
 ENetPacket* Peer::build_packet(eNetMessageType type, const std::string& data) {
-    return build_packet(type, std::vector<uint8_t>{ data.begin(), data.end() });
+    std::vector<uint8_t> temp { data.begin(), data.end() };
+    temp.push_back(0);
+    return build_packet(type, temp);
 }
 
 int Peer::send_packet(eNetMessageType type, const std::string& data)

@@ -19,7 +19,7 @@ bool Client::process_incoming_packet(ENetPacket* packet)
     if (message_type != packet::NET_MESSAGE_GAME_PACKET) {
         bool forward_packet = true;
 
-        OnIncomingPacket.Invoke(packet, &forward_packet);
+        m_ctx->OnIncomingPacket.Invoke(packet, &forward_packet);
 
         if (!forward_packet) return false;
     }
@@ -77,7 +77,7 @@ bool Client::process_incoming_raw_packet(packet::GameUpdatePacket* game_update_p
     if (game_update_packet->type != packet::PACKET_CALL_FUNCTION) {
         bool forward_packet = true;
 
-        OnIncomingTankPacket.Invoke(game_update_packet, &forward_packet);
+        m_ctx->OnIncomingTankPacket.Invoke(game_update_packet, &forward_packet);
 
         if (!forward_packet) return false;
     }
@@ -112,7 +112,7 @@ bool Client::process_incoming_variant_list(VariantList *packet, int32_t net_id) 
     std::size_t hash{ utils::hash::fnv1a(packet->Get(0).GetString()) };
 
     bool forward_packet = true;
-    OnIncomingVarlist.Invoke(packet, net_id, &forward_packet);
+    m_ctx->OnIncomingVarlist.Invoke(packet, net_id, &forward_packet);
     if (!forward_packet) return false;
 
     switch (hash) {
@@ -168,7 +168,11 @@ bool Client::process_incoming_variant_list(VariantList *packet, int32_t net_id) 
         }
 
         case "OnSetClothing"_fh: {
-            send_to_gt_client_delayed(player::Peer::build_variant_packet(*packet, net_id, ENET_PACKET_FLAG_RELIABLE), 400);
+            send_to_gt_client_delayed(player::Peer::build_variant_packet(*packet, net_id, ENET_PACKET_FLAG_RELIABLE), 100);
+            return false;
+        }
+
+        case "OnSetRoleSkinsAndIcons"_fh: {
             return true;
         }
 

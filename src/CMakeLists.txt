@@ -17,6 +17,7 @@ file(GLOB GTPROXY_INCLUDE_FILES
 file(GLOB GTPROXY_SOURCE_FILES
     *.cpp
     **/*.cpp
+    **/**/*.cpp
     ../vendor/proton/**/**/*.cpp)
 
 add_executable(${PROJECT_NAME}

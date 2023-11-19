@@ -5,8 +5,8 @@
 #include <string>
 #include <algorithm>
 
-#include "../network/packet.h"
-#include "../config.h"
+#include "../../network/packet.h"
+#include "../../config.h"
 
 namespace client {
     class Client;
@@ -18,12 +18,17 @@ class CommandBase {
 public:
     explicit CommandBase( std::vector<std::string>&& command_aliases,
                           std::vector<std::string>&& command_args = {},
-                          bool threaded = false)
+                          std::string&& command_desc = "No Description",
+                          bool threaded = false,
+                          bool bypass_arg_check = false)
         : m_aliases { std::move(command_aliases) }
+        , m_desc { command_desc }
         , IsThreaded { threaded }
         , m_args { command_args }
+        , m_bypass_arg_check { bypass_arg_check }
     {
         assert(m_aliases.size() >= 1 && "command name is empty!");
+
         m_varArg = m_args.empty() || m_args.at(m_args.size() - 1).ends_with("...");
     }
     CommandBase() = default;
@@ -42,13 +47,19 @@ public:
         return temp;
     }
 
+    std::string get_desc() {
+        return m_desc;
+    }
+
     uint32_t get_args_count() { return m_args.size(); }
     bool is_var_arg() { return m_varArg; }
+    bool should_bypass_arg_check() { return m_bypass_arg_check; }
 
 public:
     bool IsThreaded;
 private:
     std::vector<std::string> m_aliases;
+    std::string m_desc;
 
     // if the args contains three trailing dots ("...") or m_args is empty
     // ex : { "a", "b..." } or m_args.empty() is true
@@ -57,5 +68,7 @@ private:
 
     // if this flag is set, the number of arguments is not defined or a variable argument as in c++.
     bool m_varArg;
+
+    bool m_bypass_arg_check;
 };
 }

@@ -4,7 +4,7 @@
 #include <memory>
 #include <threadpool/include/BS_thread_pool.hpp>
 
-#include "command_base.h"
+#include "commands/command_base.h"
 
 namespace command {
 class CommandManager {
@@ -17,6 +17,6 @@ public:
 private:
     client::Client *m_client;
     std::shared_ptr<BS::thread_pool> m_thread_pool;
-    std::vector<command::CommandBase*> m_command_list;
+    std::vector<std::unique_ptr<command::CommandBase>> m_command_list;
 };
 }

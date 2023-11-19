@@ -101,6 +101,14 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
 
                 ctx->LoginSpoofData = utils::LoginSpoofData::Generate();
 
+                ctx->OnOutgoingPacket = {};
+                ctx->OnIncomingPacket = {};
+                ctx->OnOutgoingTankPacket = {};
+                ctx->OnIncomingTankPacket = {};
+                ctx->OnIncomingVarlist = {};
+
+                ctx->ModuleMgr = module::ModuleManager {};
+
                 m_client_context_map.insert_or_assign(generate_context_key(login_text_parse), ctx);
             }
             else {

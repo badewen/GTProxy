@@ -18,7 +18,7 @@ bool Client::process_outgoing_packet(ENetPacket* packet)
     if (message_type != packet::NET_MESSAGE_GAME_PACKET) {
         bool forward_packet = true;
 
-        OnOutgoingPacket.Invoke(packet, &forward_packet);
+        m_ctx->OnOutgoingPacket.Invoke(packet, &forward_packet);
 
         if (!forward_packet) return false;
     }
@@ -68,7 +68,7 @@ bool Client::process_outgoing_packet(ENetPacket* packet)
 bool Client::process_outgoing_raw_packet(packet::GameUpdatePacket* game_update_packet)
 {
     bool forward_packet = true;
-    OnOutgoingTankPacket.Invoke(game_update_packet, &forward_packet);
+    m_ctx->OnOutgoingTankPacket.Invoke(game_update_packet, &forward_packet);
     if (!forward_packet) return false;
 
     switch (game_update_packet->type) {

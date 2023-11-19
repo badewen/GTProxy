@@ -13,14 +13,10 @@ namespace client {
 Client::Client(server::Server* server, std::shared_ptr<BS::thread_pool> thread_pool)
     : enet_wrapper::ENetClient{}
     , m_proxy_server { server }
-    , m_packet_queue {3}
+    , m_primary_packet_queue {10}
+    , m_secondary_packet_queue {10}
     , m_curr_world {}
     , m_curr_player {}
-    , OnIncomingPacket {}
-    , OnOutgoingPacket {}
-    , OnIncomingTankPacket {}
-    , OnOutgoingTankPacket {}
-    , OnIncomingVarlist {}
     , m_thread_pool { thread_pool }
     , m_command_manager { this, thread_pool }
 {
@@ -54,6 +50,8 @@ void Client::start(std::shared_ptr<ClientContext> new_ctx)
 void Client::on_connect(ENetPeer* peer)
 {
     spdlog::info("Connected to Growtopia server.");
+
+    m_ctx->ModuleMgr.update_curr_client(this);
 }
 
 void Client::on_service_loop()
@@ -61,9 +59,12 @@ void Client::on_service_loop()
     PacketInfo packet_info;
     bool forward_packet = true;
 
-    while (is_valid() && m_packet_queue.try_dequeue(packet_info) && m_ctx) {
+    while (is_valid() && m_primary_packet_queue.try_dequeue(packet_info) && m_ctx) {
 
-        if (!packet_info.Delay.IsDone()) { m_packet_queue.enqueue(packet_info); continue; }
+        if (!packet_info.Delay.IsDone()) {
+            m_secondary_packet_queue.enqueue(packet_info);
+            continue;
+        }
 
         if (packet_info.ShouldProcess) {
             forward_packet = packet_info.IsOutgoing ? process_outgoing_packet(packet_info.Packet)
@@ -79,6 +80,7 @@ void Client::on_service_loop()
             send_to_gt_client(packet_info.Packet);
         }
     }
+    std::swap(m_primary_packet_queue, m_secondary_packet_queue);
 }
 
 void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
@@ -96,7 +98,7 @@ void Client::on_disconnect(ENetPeer* peer)
 
     // empty out
     PacketInfo temp;
-    while (m_packet_queue.try_dequeue(temp)) {}
+    while (m_primary_packet_queue.try_dequeue(temp)) { enet_packet_destroy(temp.Packet); }
 
     if (m_proxy_server->is_gt_client_valid(this)) {
         m_ctx->GtClientPeer->disconnect();
@@ -109,6 +111,7 @@ void Client::on_disconnect(ENetPeer* peer)
 
     m_ctx->IsConnected = false;
     m_ctx->GtClientPeer = nullptr;
+    m_ctx->ModuleMgr.update_curr_client(nullptr);
     m_peer_wrapper = nullptr;
     m_ctx = nullptr;
 

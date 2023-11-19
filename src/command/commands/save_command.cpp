@@ -1,12 +1,12 @@
-#include "save.h"
+#include "save_command.h"
 
 #include <fstream>
 
-#include "../client/client.h"
+#include "../../client/client.h"
 
 using namespace commands;
 
-void Save::execute(client::Client* client, std::vector<std::string> args) {
+void SaveCommand::execute(client::Client* client, std::vector<std::string> args) {
     std::string file_name{args[0]};
 
     std::ofstream out_file {file_name, std::ios::binary};

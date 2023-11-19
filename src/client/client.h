@@ -17,7 +17,8 @@
 #include "../player/player.h"
 #include "../utils/timer.h"
 #include "../utils/event_manager.h"
-#include "../commands/command_manager.h"
+#include "../command/command_manager.h"
+#include "../module/module_manager.h"
 
 namespace server {
 class Server;
@@ -33,6 +34,15 @@ struct ClientContext {
     utils::LoginSpoofData LoginSpoofData;
     std::string LoginData;
     player::Peer* GtClientPeer;
+    module::ModuleManager ModuleMgr;
+
+    utils::EventManager<ENetPacket* /* packet */, bool* /* should_forward_packet */> OnIncomingPacket;
+    utils::EventManager<ENetPacket* /* packet */, bool* /* should_forward_packet */> OnOutgoingPacket;
+
+    utils::EventManager<packet::GameUpdatePacket* /* tank_packet */, bool* /* should_forward_packet */> OnIncomingTankPacket;
+    utils::EventManager<packet::GameUpdatePacket* /* tank_packet */, bool* /* should_forward_packet */> OnOutgoingTankPacket;
+
+    utils::EventManager<VariantList* /* varlist */, int32_t /* net_id */, bool*> OnIncomingVarlist;
 };
 
 struct PacketInfo {
@@ -82,16 +92,7 @@ public:
 
     void queue_packet(ENetPacket* packet, bool is_outgoing, bool should_process = true) { queue_packet_delayed(packet, is_outgoing, 0, should_process); }
     void queue_packet_delayed(ENetPacket* packet, bool is_outgoing, float delay_ms, bool should_process = true) {
-        m_packet_queue.enqueue({packet, is_outgoing, should_process, delay_ms}); }
-
-public:
-    utils::EventManager<ENetPacket* /* packet */, bool* /* should_forward_packet */> OnIncomingPacket;
-    utils::EventManager<ENetPacket* /* packet */, bool* /* should_forward_packet */> OnOutgoingPacket;
-
-    utils::EventManager<packet::GameUpdatePacket* /* tank_packet */, bool* /* should_forward_packet */> OnIncomingTankPacket;
-    utils::EventManager<packet::GameUpdatePacket* /* tank_packet */, bool* /* should_forward_packet */> OnOutgoingTankPacket;
-
-    utils::EventManager<VariantList* /* varlist */, int32_t /* net_id */, bool*> OnIncomingVarlist;
+        m_primary_packet_queue.enqueue({packet, is_outgoing, should_process, delay_ms}); }
 
 private:
     server::Server* m_proxy_server;
@@ -102,8 +103,9 @@ private:
     std::shared_ptr<ClientContext> m_ctx;
 
     // bool = is outgoing packet
-    // why? to equalize the outgoing and incoming packet's priority ( I LOVE DEMOCRACY AND EQUAL RIGHT RAHHHHH -̶n̶o̶t̶ ̶b̶e̶i̶n̶g̶ ̶h̶e̶l̶d̶ ̶g̶u̶n̶p̶o̶i̶n̶t̶ ̶a̶t̶ )
-    moodycamel::ConcurrentQueue<PacketInfo> m_packet_queue;
+    // why? to equalize the outgoing and incoming packet's priority ( I LOVE DEMOCRACY AND EQUAL RIGHT RAHHHHH obv not being held gunpoint at )
+    moodycamel::ConcurrentQueue<PacketInfo> m_primary_packet_queue;
+    moodycamel::ConcurrentQueue<PacketInfo> m_secondary_packet_queue;
 
     World m_curr_world;
     Player m_curr_player;

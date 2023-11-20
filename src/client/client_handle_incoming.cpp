@@ -168,7 +168,7 @@ bool Client::process_incoming_variant_list(VariantList *packet, int32_t net_id) 
         }
 
         case "OnSetClothing"_fh: {
-            send_to_gt_client_delayed(player::Peer::build_variant_packet(*packet, net_id, ENET_PACKET_FLAG_RELIABLE), 100);
+            send_to_gt_client_delayed(player::Peer::build_variant_packet(*packet, net_id, ENET_PACKET_FLAG_RELIABLE), 175);
             return false;
         }
 

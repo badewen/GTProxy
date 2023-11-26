@@ -29,7 +29,7 @@ void Client::start(std::shared_ptr<ClientContext> new_ctx)
 {
     this->m_ctx = std::move(new_ctx);
     if (!m_host) {
-        if (!create_host(1, true)) {
+        if (!create_host(1, m_ctx->UseModifiedENet)) {
             spdlog::error("Failed to create ENet client host.");
             return;
         }

@@ -150,6 +150,7 @@ bool Client::process_incoming_variant_list(VariantList *packet, int32_t net_id) 
                 // Set mods zoom, country flag to JP
                 text_parse.set("country", "jp");
                 text_parse.set("mstate", 1);
+
                 packet->Get(1).Set(text_parse.get_all_raw());
                 send_to_gt_client(
                         player::Peer::build_variant_packet(
@@ -168,7 +169,7 @@ bool Client::process_incoming_variant_list(VariantList *packet, int32_t net_id) 
         }
 
         case "OnSetClothing"_fh: {
-            send_to_gt_client_delayed(player::Peer::build_variant_packet(*packet, net_id, ENET_PACKET_FLAG_RELIABLE), 175);
+            send_to_gt_client_delayed(player::Peer::build_variant_packet(*packet, net_id, ENET_PACKET_FLAG_RELIABLE), 250);
             return false;
         }
 

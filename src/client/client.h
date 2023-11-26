@@ -31,6 +31,7 @@ struct ClientContext {
     enet_uint16 RedirectPort;
     bool IsLoginDataSent;
     bool IsConnected;
+    bool UseModifiedENet;
     utils::LoginSpoofData LoginSpoofData;
     std::string LoginData;
     player::Peer* GtClientPeer;

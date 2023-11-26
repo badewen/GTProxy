@@ -132,8 +132,9 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
             auto found_http_data = server::Http::ServerDataCache.find(login_text_parse.get("meta", 1));
 
             if (found_http_data != server::Http::ServerDataCache.end()) {
-                ctx->RedirectIp     = found_http_data->second.get("server", 1);
-                ctx->RedirectPort   = found_http_data->second.get<enet_uint16>("port", 1);
+                ctx->RedirectIp         = found_http_data->second.get("server", 1);
+                ctx->RedirectPort       = found_http_data->second.get<enet_uint16>("port", 1);
+                ctx->UseModifiedENet    = found_http_data->second.get<bool>("type2", 1);
 
                 server::Http::ServerDataCache.erase(login_text_parse.get("meta", 1));
             }

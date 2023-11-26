@@ -19,17 +19,15 @@ public:
     explicit CommandBase( std::vector<std::string>&& command_aliases,
                           std::vector<std::string>&& command_args = {},
                           std::string&& command_desc = "No Description",
-                          bool threaded = false,
-                          bool bypass_arg_check = false)
+                          uint16_t min_args = 0,
+                          bool threaded = false)
         : m_aliases { std::move(command_aliases) }
         , m_desc { command_desc }
         , IsThreaded { threaded }
         , m_args { command_args }
-        , m_bypass_arg_check { bypass_arg_check }
+        , m_minimum_args_count { min_args }
     {
         assert(m_aliases.size() >= 1 && "command name is empty!");
-
-        m_varArg = m_args.empty() || m_args.at(m_args.size() - 1).ends_with("...");
     }
     CommandBase() = default;
     virtual ~CommandBase() = default;
@@ -52,8 +50,7 @@ public:
     }
 
     uint32_t get_args_count() { return m_args.size(); }
-    bool is_var_arg() { return m_varArg; }
-    bool should_bypass_arg_check() { return m_bypass_arg_check; }
+    uint16_t get_minimum_args_count() const { return m_minimum_args_count; }
 
 public:
     bool IsThreaded;
@@ -66,9 +63,6 @@ private:
     // then the "m_vararg" flag is set to true.
     std::vector<std::string> m_args;
 
-    // if this flag is set, the number of arguments is not defined or a variable argument as in c++.
-    bool m_varArg;
-
-    bool m_bypass_arg_check;
+    uint16_t m_minimum_args_count;
 };
 }

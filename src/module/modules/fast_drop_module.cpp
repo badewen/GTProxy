@@ -29,7 +29,7 @@ void FastDropModule::drop_packet_handler(ENetPacket* outg_packet, bool* forward_
                         item_id,
                         std::to_string(m_amount))
                 ),
-                500
+                300
         );
 
     }

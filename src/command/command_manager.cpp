@@ -28,19 +28,16 @@ CommandManager::~CommandManager() = default;
 void CommandManager::execute_command(const std::string& command_alias, std::vector<std::string> args) {
     for (auto& cmd_mod : m_command_list) {
         if (cmd_mod->find_alias(command_alias)) {
-
-            if (!cmd_mod->should_bypass_arg_check()) {
-                if (args.size() < cmd_mod->get_args_count() && !cmd_mod->is_var_arg()) {
-                    m_client->log_to_client(
-                            fmt::format("`4Wrong number of argument. {} is required but {} was provided.",
-                                        cmd_mod->get_args_count(),
-                                        args.size())
-                    );
-                    m_client->log_to_client(
-                            fmt::format("Usage : `#{}", cmd_mod->get_usage_hint())
-                    );
-                    return;
-                }
+            if (args.size() < cmd_mod->get_minimum_args_count() && cmd_mod->get_minimum_args_count()) {
+                m_client->log_to_client(
+                         fmt::format("`4Wrong number of argument. required {} argument minimum, but {} is provided",
+                                    cmd_mod->get_minimum_args_count(),
+                                    args.size())
+                );
+                m_client->log_to_client(
+                        fmt::format("Usage : `#{}", cmd_mod->get_usage_hint())
+                );
+                return;
             }
             if (cmd_mod->IsThreaded) {
                 m_thread_pool->push_task(&CommandBase::execute, cmd_mod.get(), m_client, args);

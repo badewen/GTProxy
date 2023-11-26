@@ -8,7 +8,8 @@ public:
     SaveCommand() : command::CommandBase(
             {"save", "save_world"},
             {"file_name"},
-            "Dump current world into specified file name by file_name. (need to re-enter if some tile has changed)"
+            "Dump current world into specified file name by file_name. (need to re-enter if some tile has changed)",
+            1
             ) {}
 
     void execute(client::Client* client, std::vector<std::string> args) override;

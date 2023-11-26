@@ -10,7 +10,8 @@ public:
             {"fastdrop", "fd"},
             {"amount", "[enable_disable]"},
             "Skip drop dialog.\n if \"enable_disable\" is not specified, it will be defaulted to enable",
-            false, true) {}
+            1
+            ) {}
 
     void execute(client::Client* client, std::vector<std::string> args) override;
 };

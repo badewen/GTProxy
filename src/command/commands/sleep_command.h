@@ -12,6 +12,7 @@ public:
         {"internal_sleep"},
         {},
         "Debug command for testing threaded command",
+        0,
         true
     } {}
 

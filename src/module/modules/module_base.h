@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <utility>
 
 namespace client {
 class Client;
@@ -12,7 +13,7 @@ class ModuleBase {
 public:
 
     ModuleBase(std::string module_name) :
-        Name{ module_name }
+        Name{std::move( module_name )}
     {}
 
     virtual void on_enable() {}
@@ -33,10 +34,10 @@ public:
 
 public:
     std::string Name;
-    bool Enabled;
+    bool Enabled{};
 
 protected:
-    client::Client* m_client;
+    client::Client* m_client{};
 };
 
 }

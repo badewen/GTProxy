@@ -52,6 +52,10 @@ void Client::on_connect(ENetPeer* peer)
     spdlog::info("Connected to Growtopia server.");
 
     m_ctx->ModuleMgr.update_curr_client(this);
+
+    // activate default module
+    m_ctx->ModuleMgr.get_module_by_name("FastVend_Module")->enable();
+
 }
 
 void Client::on_service_loop()

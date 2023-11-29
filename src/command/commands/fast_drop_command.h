@@ -5,7 +5,6 @@
 namespace commands {
 class FastDropCommand : public command::CommandBase {
 public:
-    //
     FastDropCommand() : command::CommandBase(
             {"fastdrop", "fd"},
             {"amount", "[enable_disable]"},

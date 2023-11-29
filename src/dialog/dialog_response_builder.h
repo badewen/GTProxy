@@ -2,7 +2,6 @@
 
 #include <string>
 #include <unordered_map>
-#include <utility>
 
 #include "../utils/text_parse.h"
 
@@ -15,7 +14,6 @@ public:
     void input_text(const std::string& input_text_id, const std::string& value);
 
     std::string build();
-
 
     void click_button(std::string button_id) {
         m_clicked_button = std::move(button_id);
@@ -32,13 +30,17 @@ public:
     }
     bool has_text_input(const std::string& id) { return m_text_inputs.find(id) != m_text_inputs.end(); }
     bool has_data_embed(const std::string& embed_data_key) {
-        return std::find(m_data_embeds.begin(), m_data_embeds.end(), embed_data_key) != m_data_embeds.end();
+        for (const auto& data : m_data_embeds) {
+            if (!data.get(embed_data_key, 0).empty())
+                return true;
+        }
+        return false;
     }
 
 private:
     // includes text input and checkbox
     std::unordered_map<std::string, std::string> m_text_inputs;
-    std::vector<std::string> m_data_embeds;
+    std::vector<utils::TextParse> m_data_embeds;
     std::vector<std::string> m_button_list;
     std::string m_clicked_button;
     std::string m_dialog_name;

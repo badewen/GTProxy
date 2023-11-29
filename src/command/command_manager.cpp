@@ -6,6 +6,9 @@
 #include "commands/save_command.h"
 #include "commands/sleep_command.h"
 #include "commands/fast_drop_command.h"
+#include "commands/fast_buy_command.h"
+#include "commands/fast_empty_command.h"
+#include "commands/fast_stock_command.h"
 
 #include "../client/client.h"
 
@@ -21,6 +24,9 @@ CommandManager::CommandManager(client::Client *client, std::shared_ptr<BS::threa
     m_command_list.push_back(std::make_unique<commands::SaveCommand>());
     m_command_list.push_back(std::make_unique<commands::SleepCommand>());
     m_command_list.push_back(std::make_unique<commands::FastDropCommand>());
+    m_command_list.push_back(std::make_unique<commands::FastBuyCommand>());
+    m_command_list.push_back(std::make_unique<commands::FastEmptyCommand>());
+    m_command_list.push_back(std::make_unique<commands::FastStockCommand>());
 }
 
 CommandManager::~CommandManager() = default;

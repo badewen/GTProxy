@@ -8,11 +8,6 @@ using namespace commands;
 void FastDropCommand::execute(client::Client *client, std::vector<std::string> args) {
     auto mod = (modules::FastDropModule*)client->get_ctx()->ModuleMgr.get_module_by_name("FastDrop_Module").get();
 
-    if (args.size() == 0) {
-        client->log_to_client("`4Wrong argument amount is passed");
-        return;
-    }
-
     try {
         mod->set_drop_amount(std::stoi(args[0]));
 

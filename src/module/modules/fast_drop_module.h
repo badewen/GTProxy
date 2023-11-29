@@ -14,8 +14,8 @@ public:
         , m_amount(0)
     {}
 
-    virtual void on_enable() override;
-    virtual void on_disable() override;
+    void on_enable() override;
+    void on_disable() override;
 
     void set_drop_amount(uint32_t amount) {
         m_amount = amount;

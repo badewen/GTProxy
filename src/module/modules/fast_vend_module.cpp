@@ -25,7 +25,7 @@ void FastVendModule::on_dialog_hook(VariantList* var_list, int32_t net_id, bool*
         on_vending_buy_dialog(dialog_response);
     }
     // confirms the buy dialog
-    else if (dialog_response.has_data_embed("verify")) {
+    else if (dialog_response.has_data_embed("verify") && m_enable_fast_buy) {
         on_vending_confirm_buy(dialog_response);
     }
 
@@ -52,7 +52,7 @@ void FastVendModule::on_dialog_hook(VariantList* var_list, int32_t net_id, bool*
 
     m_client->send_to_server_delayed(
             player::Peer::build_packet(
-                packet::NET_MESSAGE_GENERIC_TEXT,
+                packet::PacketType::NET_MESSAGE_GENERIC_TEXT,
                 dialog_response.build()
             ),
             50

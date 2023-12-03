@@ -17,13 +17,13 @@ void FastDropModule::drop_packet_handler(ENetPacket* outg_packet, bool* forward_
     utils::TextParse text_parse { packet::get_text(outg_packet) };
     std::string item_id;
 
-    if (packet::get_message_type(outg_packet) == packet::NET_MESSAGE_GENERIC_TEXT &&
+    if (packet::get_message_type(outg_packet) == packet::PacketType::NET_MESSAGE_GENERIC_TEXT &&
         !text_parse.get("action", 0, "|").empty()
     ) {
         item_id = text_parse.get("itemID", 1, "|");
 
         m_client->send_to_server_delayed( player::Peer::build_packet(
-                packet::NET_MESSAGE_GENERIC_TEXT,
+                packet::PacketType::NET_MESSAGE_GENERIC_TEXT,
                 fmt::format(
                         "action|dialog_return\ndialog_name|drop_item\nitemID|{}|\ncount|{}",
                         item_id,

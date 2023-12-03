@@ -11,8 +11,6 @@ void FastBuyCommand::execute(client::Client *client, std::vector<std::string> ar
     try {
         mod->set_buy_amount(std::stoi(args.at(0)));
 
-        client->log_to_client(args.at(0));
-
         if (args.size() > 1 && args[1] == "enable" || args.size() == 1) {
             mod->enable_fast_buy(true);
         }

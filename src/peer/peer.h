@@ -11,19 +11,20 @@ public:
     explicit Peer(ENetPeer* peer);
     ~Peer();
 
-    static ENetPacket* build_packet(packet::eNetMessageType type, const std::vector<uint8_t>& data);
-    static ENetPacket* build_packet(packet::eNetMessageType type, const std::string& data);
+    static ENetPacket* build_packet(packet::PacketType type, const std::vector<uint8_t>& data);
+    static ENetPacket* build_packet(packet::PacketType type, const std::string& data);
     static ENetPacket* build_raw_packet(packet::GameUpdatePacket *game_update_packet,
-                                        packet::eNetMessageType type = packet::eNetMessageType::NET_MESSAGE_GAME_PACKET,
+                                        packet::PacketType type = packet::PacketType::NET_MESSAGE_GAME_PACKET,
                                         std::size_t length = sizeof(packet::GameUpdatePacket),
                                         std::uint8_t* extended_data = nullptr,
                                         enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE);
     static ENetPacket* build_variant_packet(VariantList variant_list, std::int32_t net_id, enet_uint32 flags);
 
-    int send_packet(packet::eNetMessageType type, const std::string& data);
+    int send_packet(packet::PacketType type, const std::vector<uint8_t> &data);
+    int send_packet(packet::PacketType type, const std::string& data);
     int send_packet_packet(ENetPacket* packet, bool destroy_packet = false);
     int send_raw_packet(packet::GameUpdatePacket *game_update_packet,
-                    packet::eNetMessageType type = packet::eNetMessageType::NET_MESSAGE_GAME_PACKET,
+                    packet::PacketType type = packet::PacketType::NET_MESSAGE_GAME_PACKET,
                     std::size_t length = sizeof(packet::GameUpdatePacket),
                     std::uint8_t* extended_data = nullptr,
                     enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE);
@@ -40,5 +41,6 @@ public:
 private:
     ENetPeer* m_peer;
     std::mutex send_lock;
+
 };
 }

@@ -66,13 +66,13 @@ void Server::on_connect(ENetPeer* peer)
     m_client_map.emplace(gt_client, server_client);
     m_gt_client_map.emplace(peer, gt_client);
 
-    gt_client->send_packet(packet::NET_MESSAGE_SERVER_HELLO, { 0 });
+    gt_client->send_packet(packet::NET_MESSAGE_SERVER_HELLO, std::vector<uint8_t>{ 0 });
     spdlog::debug("SENT SERVER HELLO PACKET TO GT CLIENT");
 }
 
 void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
 {
-    packet::eNetMessageType message_type{packet::get_message_type(packet) };
+    packet::PacketType message_type{packet::get_message_type(packet) };
     player::Peer* gt_client = get_gt_client_by_raw_peer(peer);
 
     if (message_type == packet::NET_MESSAGE_GENERIC_TEXT) {

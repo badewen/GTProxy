@@ -13,10 +13,10 @@ using namespace std::chrono_literals;
 namespace client {
 bool Client::process_incoming_packet(ENetPacket* packet)
 {
-    packet::eNetMessageType message_type{packet::get_message_type(packet) };
+    packet::PacketType message_type{packet::get_message_type(packet) };
 //    std::string message_data{ packet::get_text(packet) };
 
-    if (message_type != packet::NET_MESSAGE_GAME_PACKET) {
+    if (message_type != packet::PacketType::NET_MESSAGE_GAME_PACKET) {
         bool forward_packet = true;
 
         m_ctx->OnIncomingPacket.Invoke(packet, &forward_packet);
@@ -25,7 +25,7 @@ bool Client::process_incoming_packet(ENetPacket* packet)
     }
 
     switch (message_type) {
-        case packet::NET_MESSAGE_SERVER_HELLO: {
+        case packet::PacketType::NET_MESSAGE_SERVER_HELLO: {
             while (this->m_ctx->IsLoginDataSent) { std::this_thread::sleep_for(1ms); }
 
             utils::TextParse text_parse = utils::TextParse{this->m_ctx->LoginData};
@@ -56,13 +56,13 @@ bool Client::process_incoming_packet(ENetPacket* packet)
             );
 
             spdlog::debug(std::string("Received Hello packet, sending ") + (Config::get_misc().m_force_update_game_version ? "modified" : "unmodified") + "login data..");
-            send_to_server(player::Peer::build_packet(packet::NET_MESSAGE_GENERIC_TEXT, text_parse.get_all_raw()));
+            send_to_server(player::Peer::build_packet(packet::PacketType::NET_MESSAGE_GENERIC_TEXT, text_parse.get_all_raw()));
 
             this->m_ctx->IsLoginDataSent = true;
 
             return false;
         }
-        case packet::NET_MESSAGE_GAME_PACKET: {
+        case packet::PacketType::NET_MESSAGE_GAME_PACKET: {
             packet::GameUpdatePacket* game_update_packet{packet::get_tank_packet(packet) };
             return process_incoming_raw_packet(game_update_packet);
         }
@@ -74,7 +74,7 @@ bool Client::process_incoming_packet(ENetPacket* packet)
 
 bool Client::process_incoming_raw_packet(packet::GameUpdatePacket* game_update_packet)
 {
-    if (game_update_packet->type != packet::PACKET_CALL_FUNCTION) {
+    if (game_update_packet->type != packet::TankPacketType::PACKET_CALL_FUNCTION) {
         bool forward_packet = true;
 
         m_ctx->OnIncomingTankPacket.Invoke(game_update_packet, &forward_packet);
@@ -83,7 +83,7 @@ bool Client::process_incoming_raw_packet(packet::GameUpdatePacket* game_update_p
     }
 
     switch (game_update_packet->type) {
-        case packet::PACKET_CALL_FUNCTION: {
+        case packet::TankPacketType::PACKET_CALL_FUNCTION: {
             std::uint8_t* extended_data{packet::get_extended_data(game_update_packet) };
             if (!extended_data) {
                 break;
@@ -92,7 +92,7 @@ bool Client::process_incoming_raw_packet(packet::GameUpdatePacket* game_update_p
             variant_list.SerializeFromMem(extended_data, static_cast<int>(game_update_packet->data_size));
             return process_incoming_variant_list(&variant_list, game_update_packet->net_id);
         }
-       case packet::PACKET_SEND_MAP_DATA: {
+       case packet::TankPacketType::PACKET_SEND_MAP_DATA: {
            std::uint8_t* raw_world_data{ packet::get_extended_data(game_update_packet) };
            if (!raw_world_data) {
                break;
@@ -169,12 +169,13 @@ bool Client::process_incoming_variant_list(VariantList *packet, int32_t net_id) 
         }
 
         case "OnSetClothing"_fh: {
-            send_to_gt_client_delayed(player::Peer::build_variant_packet(*packet, net_id, ENET_PACKET_FLAG_RELIABLE), 250);
+            send_to_gt_client_delayed(player::Peer::build_variant_packet(*packet, net_id, ENET_PACKET_FLAG_RELIABLE), 275);
             return false;
         }
 
         case "OnSetRoleSkinsAndIcons"_fh: {
-            return true;
+            send_to_gt_client_delayed(player::Peer::build_variant_packet(*packet, net_id, ENET_PACKET_FLAG_RELIABLE), 275);
+            return false;
         }
 
         case "OnRequestWorldSelectMenu"_fh: {

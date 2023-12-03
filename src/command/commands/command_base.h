@@ -49,7 +49,7 @@ public:
         return m_desc;
     }
 
-    uint32_t get_args_count() { return m_args.size(); }
+    size_t get_args_count() { return m_args.size(); }
     uint16_t get_minimum_args_count() const { return m_minimum_args_count; }
 
 public:

@@ -64,13 +64,13 @@ public:
     template <typename T, typename std::enable_if_t<std::is_signed_v<T>, bool> = true>
     T get(const std::string& key, int index, const std::string_view& token = "|") const
     {
-        return std::stoi(get(key, index, token));
+        return static_cast<T>(std::stoi(get(key, index, token)));
     }
 
     template <typename T, typename std::enable_if_t<std::is_unsigned_v<T>, bool> = true>
     T get(const std::string& key, int index, const std::string_view& token = "|") const
     {
-        return std::stoul(get(key, index, token));
+        return static_cast<T>(std::stoul(get(key, index, token)));
     }
 
     template <typename T, typename std::enable_if_t<std::is_floating_point_v<T>, bool> = true>

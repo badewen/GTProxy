@@ -93,7 +93,7 @@ public:
 
     void queue_packet(ENetPacket* packet, bool is_outgoing, bool should_process = true) { queue_packet_delayed(packet, is_outgoing, 0, should_process); }
     void queue_packet_delayed(ENetPacket* packet, bool is_outgoing, float delay_ms, bool should_process = true) {
-        m_primary_packet_queue.enqueue({packet, is_outgoing, should_process, delay_ms}); }
+        m_secondary_packet_queue.enqueue({packet, is_outgoing, should_process, delay_ms}); }
 
 private:
     server::Server* m_proxy_server;

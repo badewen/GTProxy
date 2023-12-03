@@ -2,6 +2,7 @@
 
 #include "modules/fast_drop_module.h"
 #include "modules/fast_vend_module.h"
+#include "modules/auto_fish_module.h"
 
 using namespace module;
 
@@ -9,6 +10,7 @@ ModuleManager::ModuleManager() {
     m_client = nullptr;
     m_modules.push_back(std::move(std::make_shared<modules::FastDropModule>(nullptr)));
     m_modules.push_back(std::move(std::make_shared<modules::FastVendModule>(nullptr)));
+    m_modules.push_back(std::move(std::make_shared<modules::AutoFishModule>(nullptr)));
 }
 
 std::shared_ptr<module::ModuleBase> ModuleManager::get_module_by_name(const std::string &module_name) {

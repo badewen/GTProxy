@@ -60,38 +60,65 @@ find_package(pcg-cpp REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(PalSigslot)
 
-target_link_libraries(${PROJECT_NAME}
-    enet
-    fmt::fmt
-    httplib::httplib
-    LibreSSL::SSL LibreSSL::TLS LibreSSL::Crypto
-    magic_enum::magic_enum
-    nlohmann_json::nlohmann_json
-    pcg-cpp::pcg-cpp
-    spdlog::spdlog
-    Pal::Sigslot)
+# LibreSSL cant compile on Android
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    target_link_libraries(${PROJECT_NAME}
+        enet
+        fmt::fmt
+        httplib::httplib
+        openssl::openssl
+        magic_enum::magic_enum
+        nlohmann_json::nlohmann_json
+        pcg-cpp::pcg-cpp
+        spdlog::spdlog
+        Pal::Sigslot)
+
+else ()
+    target_link_libraries(${PROJECT_NAME}
+        enet
+        fmt::fmt
+        httplib::httplib
+        LibreSSL::SSL LibreSSL::TLS LibreSSL::Crypto
+        magic_enum::magic_enum
+        nlohmann_json::nlohmann_json
+        pcg-cpp::pcg-cpp
+        spdlog::spdlog
+        Pal::Sigslot)
+
+endif ()
 
 # Copy dependencies binary to current binary dir.
-if (WIN32)
-    if (EXISTS "${CMAKE_BINARY_DIR}/conan/build/${CMAKE_BUILD_TYPE}")
+if (EXISTS "${CMAKE_BINARY_DIR}/conan/build/${CMAKE_BUILD_TYPE}")
+    if (WIN32)
         file(GLOB GTPROXY_DEPENDENCIES_BINARY
             "${CMAKE_BINARY_DIR}/conan/build/${CMAKE_BUILD_TYPE}/*.dll")
     else ()
         file(GLOB GTPROXY_DEPENDENCIES_BINARY
-            "${CMAKE_BINARY_DIR}/conan/build/*.dll")
+            "${CMAKE_BINARY_DIR}/conan/build/${CMAKE_BUILD_TYPE}/*.so")
     endif ()
 
-    foreach (ConanBinary IN LISTS GTPROXY_DEPENDENCIES_BINARY)
-        string(REPLACE "${CMAKE_BINARY_DIR}/conan/build/${CMAKE_BUILD_TYPE}" "${CMAKE_CURRENT_BINARY_DIR}" REPLACED_GTPROXY_DEPENDENCIES_BINARY "${ConanBinary}")
-        message(STATUS "Preparing ${ConanBinary} to ${REPLACED_GTPROXY_DEPENDENCIES_BINARY}")
-        add_custom_command(
-            TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ConanBinary}" "${REPLACED_GTPROXY_DEPENDENCIES_BINARY}"
-            COMMENT "Copying ${ConanBinary} to ${REPLACED_GTPROXY_DEPENDENCIES_BINARY}")
-    endforeach ()
+else ()
+    if (WIN32)
+        file(GLOB GTPROXY_DEPENDENCIES_BINARY
+            "${CMAKE_BINARY_DIR}/conan/build/*.dll")
+    else ()
+        file(GLOB GTPROXY_DEPENDENCIES_BINARY
+            "${CMAKE_BINARY_DIR}/conan/build/*.so")
+    endif ()
 
+endif ()
+
+foreach (ConanBinary IN LISTS GTPROXY_DEPENDENCIES_BINARY)
+    string(REPLACE "${CMAKE_BINARY_DIR}/conan/build/${CMAKE_BUILD_TYPE}" "${CMAKE_CURRENT_BINARY_DIR}" REPLACED_GTPROXY_DEPENDENCIES_BINARY "${ConanBinary}")
+    message(STATUS "Preparing ${ConanBinary} to ${REPLACED_GTPROXY_DEPENDENCIES_BINARY}")
     add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:enet>" "${CMAKE_CURRENT_BINARY_DIR}"
-        COMMENT "Copying enet binary to ${CMAKE_CURRENT_BINARY_DIR}")
-endif ()
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ConanBinary}" "${REPLACED_GTPROXY_DEPENDENCIES_BINARY}"
+        COMMENT "Copying ${ConanBinary} to ${REPLACED_GTPROXY_DEPENDENCIES_BINARY}")
+endforeach ()
+
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:enet>" "${CMAKE_CURRENT_BINARY_DIR}"
+    COMMENT "Copying enet binary to ${CMAKE_CURRENT_BINARY_DIR}")
+

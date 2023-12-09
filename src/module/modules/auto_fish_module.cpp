@@ -29,7 +29,7 @@ void AutoFishModule::on_outgoing_tile_hook(const packet::GameUpdatePacket *tank_
 void AutoFishModule::on_gone_fishing_hook(const packet::GameUpdatePacket* tank_packet, bool* forward_packet) {
     if (tank_packet->type == packet::PACKET_GONE_FISHIN &&
         m_tile_packet.has_value() &&
-        tank_packet->net_id == m_client->get_local_player().NetID)
+        tank_packet->net_id == m_client->get_ctx()->PlayerInfo.NetID)
     {
         m_fishing_packet = m_tile_packet;
         m_fish_out_packet = m_fishing_packet;
@@ -40,7 +40,7 @@ void AutoFishModule::on_gone_fishing_hook(const packet::GameUpdatePacket* tank_p
 }
 
 void AutoFishModule::on_splash_audio_hook(VariantList* varlist, int32_t net_id, bool* forward_packet) {
-    if (net_id != m_client->get_local_player().NetID &&
+    if (net_id != m_client->get_ctx()->PlayerInfo.NetID &&
         !m_fishing_packet.has_value())
     {
         return;

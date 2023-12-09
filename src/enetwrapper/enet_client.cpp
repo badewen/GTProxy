@@ -90,7 +90,7 @@ void ENetClient::service_thread()
         ENetEvent event{};
         on_service_loop();
 
-        while (m_host && enet_host_service(m_host, &event, 2) > 0) {
+        while (m_host && enet_host_service(m_host, &event, 1) > 0) {
             switch (event.type) {
                 case ENET_EVENT_TYPE_CONNECT:
                     on_connect(event.peer);

@@ -12,10 +12,10 @@
 namespace client {
 bool Client::process_outgoing_packet(ENetPacket* packet)
 {
-    packet::PacketType message_type{packet::get_message_type(packet) };
+    packet::ePacketType message_type{packet::get_message_type(packet) };
     std::string message_data{packet::get_text(packet) };
 
-    if (message_type != packet::PacketType::NET_MESSAGE_GAME_PACKET) {
+    if (message_type != packet::ePacketType::NET_MESSAGE_GAME_PACKET) {
         bool forward_packet = true;
 
         m_ctx->OnOutgoingPacket.Invoke(packet, &forward_packet);
@@ -24,7 +24,7 @@ bool Client::process_outgoing_packet(ENetPacket* packet)
     }
 
     switch (message_type) {
-        case packet::PacketType::NET_MESSAGE_GENERIC_TEXT: {
+        case packet::ePacketType::NET_MESSAGE_GENERIC_TEXT: {
             if (message_data.find("action|input") != std::string::npos) {
                 utils::TextParse text_parse{ message_data };
                 if (text_parse.get("text", 1).empty()) {
@@ -44,17 +44,22 @@ bool Client::process_outgoing_packet(ENetPacket* packet)
                     return false;
                 }
             }
+            else if (message_data.find("action|refresh_item_data") != std::string::npos &&
+                     Config::get_misc().m_bypass_item_dat)
+            {
+                send_to_server(player::Peer::build_packet(packet::NET_MESSAGE_GENERIC_TEXT, "action|enter_game"));
+                return false;
+            }
             break;
         }
-        case packet::PacketType::NET_MESSAGE_GAME_MESSAGE: {
+        case packet::ePacketType::NET_MESSAGE_GAME_MESSAGE: {
             if (message_data.find("action|quit") != std::string::npos && message_data.length() <= 15) {
                 m_ctx->GtClientPeer->disconnect();
                 m_peer_wrapper->disconnect();
             }
-
             break;
         }
-        case packet::PacketType::NET_MESSAGE_GAME_PACKET: {
+        case packet::ePacketType::NET_MESSAGE_GAME_PACKET: {
             packet::GameUpdatePacket* game_update_packet{packet::get_tank_packet(packet)  };
             return process_outgoing_raw_packet(game_update_packet);
         }
@@ -72,7 +77,7 @@ bool Client::process_outgoing_raw_packet(packet::GameUpdatePacket* game_update_p
     if (!forward_packet) return false;
 
     switch (game_update_packet->type) {
-        case packet::TankPacketType::PACKET_DISCONNECT: {
+        case packet::eTankPacketType::PACKET_DISCONNECT: {
             m_ctx->IsConnected = false;
             m_peer_wrapper->disconnect_now();
             m_ctx->GtClientPeer->disconnect_now();

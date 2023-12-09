@@ -2,7 +2,7 @@
 
 #include <proton/shared/util/Variant.h>
 
-#include "../world/world.h"
+#include "../world/world_info.h"
 #include "../network/packet.h"
 
 class Player {

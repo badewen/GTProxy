@@ -3,12 +3,7 @@
 #include <spdlog/spdlog.h>
 
 #include "config.h"
-// fucking ugly hack.
-// msvc complaining on
-// config.h(37,25): error C3927: '->': trailing return type is not allowed after a non-function declarator
-// ????
-// http.cpp works fine with static member declared inside the clas?????
-// im going insane because of msvc lmao
+
 Config::Host s_host;
 Config::Server s_server;
 Config::Command s_command;
@@ -35,6 +30,8 @@ void Config::Init()
     s_command.m_prefix = "!";
     s_misc.m_force_update_game_version = false;
     s_misc.m_force_update_protocol = false;
+    s_misc.m_bypass_item_dat = false;
+    s_misc.m_spoof_login = false;
 }
 
 bool Config::Create(const std::string& file)
@@ -48,6 +45,8 @@ bool Config::Create(const std::string& file)
     j["command"]["prefix"] = s_command.m_prefix;
     j["misc"]["forceUpdateGameVersion"] = s_misc.m_force_update_game_version;
     j["misc"]["forceUpdateGameVersionProtocol"] = s_misc.m_force_update_protocol;
+    j["misc"]["bypassUpdateItemData"] = s_misc.m_bypass_item_dat;
+    j["misc"]["spoofLogin"] = s_misc.m_spoof_login;
 
     std::ofstream ofs{ file };
     if (!ofs.is_open()) {
@@ -78,6 +77,8 @@ bool Config::Load(const std::string& file)
         s_command.m_prefix = j["command"]["prefix"];
         s_misc.m_force_update_game_version = j["misc"]["forceUpdateGameVersion"];
         s_misc.m_force_update_protocol = j["misc"]["forceUpdateGameVersionProtocol"];
+        s_misc.m_bypass_item_dat = j["misc"]["bypassUpdateItemData"];
+        s_misc.m_spoof_login = j["misc"]["spoofLogin"];
     }
     catch (const nlohmann::json::exception& ex) {
         if (ex.id != 302) {

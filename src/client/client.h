@@ -13,7 +13,7 @@
 #include "../utils/random.h"
 #include "../utils/text_parse.h"
 #include "../utils/login_spoof_data.h"
-#include "../world/world.h"
+#include "../world/world_info.h"
 #include "../player/player.h"
 #include "../utils/timer.h"
 #include "../utils/event_manager.h"
@@ -36,6 +36,8 @@ struct ClientContext {
     std::string LoginData;
     player::Peer* GtClientPeer;
     module::ModuleManager ModuleMgr;
+    world::WorldInfo CurrentWorldInfo;
+    Player PlayerInfo;
 
     utils::EventManager<ENetPacket* /* packet */, bool* /* should_forward_packet */> OnIncomingPacket;
     utils::EventManager<ENetPacket* /* packet */, bool* /* should_forward_packet */> OnOutgoingPacket;
@@ -83,13 +85,15 @@ public:
 
     void log_to_client(const std::string& message);
 
+    void execute_command(const std::string& name, std::vector<std::string> args) {
+        m_command_manager.execute_command(name, std::move(args));
+    }
+
 public:
     bool is_valid() { return m_peer_wrapper && m_peer_wrapper->is_connected(); }
     bool is_ctx_empty() { return !m_ctx; }
 
     std::shared_ptr<ClientContext> get_ctx() { return m_ctx; }
-    Player& get_local_player() { return m_curr_player; }
-    World& get_current_world() { return m_curr_world; }
 
     void queue_packet(ENetPacket* packet, bool is_outgoing, bool should_process = true) { queue_packet_delayed(packet, is_outgoing, 0, should_process); }
     void queue_packet_delayed(ENetPacket* packet, bool is_outgoing, float delay_ms, bool should_process = true) {
@@ -108,8 +112,6 @@ private:
     moodycamel::ConcurrentQueue<PacketInfo> m_primary_packet_queue;
     moodycamel::ConcurrentQueue<PacketInfo> m_secondary_packet_queue;
 
-    World m_curr_world;
-    Player m_curr_player;
     command::CommandManager m_command_manager;
 };
 }

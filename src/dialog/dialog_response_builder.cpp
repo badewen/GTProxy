@@ -20,7 +20,7 @@ DialogResponseBuilder::DialogResponseBuilder(const std::string& dialog_request)
         } else if (dialog_data_tokenize.at(0) == "add_text_input" ||
                    dialog_data_tokenize.at(0) == "add_checkbox"
                 ) {
-            m_text_inputs.insert_or_assign(dialog_data_tokenize.at(1), dialog_data_tokenize.at(3));
+            m_text_inputs.insert_or_assign(dialog_data_tokenize.at(1), dialog_data_tokenize.at(2));
         } else if (dialog_data_tokenize.at(0) == "end_dialog") {
             m_dialog_name = dialog_data_tokenize.at(1);
         } else if (dialog_data_tokenize.at(0) == "add_button") {

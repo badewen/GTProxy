@@ -21,11 +21,15 @@ public:
         m_amount = amount;
     }
 
+    void set_drop_all(bool drop_all) {
+        m_drop_all = drop_all;
+    }
+
 private:
     void drop_dialog_blocker(VariantList* varlist, int32_t net_id, bool* forward_packet);
-    void drop_packet_handler(ENetPacket* outg_packet, bool* forward_packet);
 
 private:
     uint32_t m_amount;
+    bool m_drop_all;
 };
 }

@@ -7,7 +7,7 @@
 #include <spdlog/spdlog.h>
 
 namespace packet {
-enum PacketType : std::uint32_t {
+enum ePacketType : std::uint32_t {
     NET_MESSAGE_UNKNOWN = 0,
     NET_MESSAGE_SERVER_HELLO,
     NET_MESSAGE_GENERIC_TEXT,
@@ -20,7 +20,7 @@ enum PacketType : std::uint32_t {
     NET_MESSAGE_MAX
 };
 
-enum TankPacketType : std::uint8_t {
+enum eTankPacketType : std::uint8_t {
     PACKET_STATE = 0,
     PACKET_CALL_FUNCTION,
     PACKET_UPDATE_STATUS,
@@ -71,7 +71,7 @@ enum TankPacketType : std::uint8_t {
     PACKET_MAX
 };
 
-enum TankPacketFlag : std::uint32_t {
+enum eTankPacketFlag : std::uint32_t {
     PACKET_FLAG_NONE = 0,
     PACKET_FLAG_UNK = (1 << 1),
     PACKET_FLAG_RESET_VISUAL_STATE = (1 << 2),
@@ -96,13 +96,13 @@ enum TankPacketFlag : std::uint32_t {
 
 #pragma pack(push, 1)
 struct GameUpdatePacket {
-    TankPacketType type;
+    eTankPacketType type;
     std::uint8_t pad[3];
     std::int32_t net_id;
     std::uint8_t pad_2[4];
 
     union {
-        TankPacketFlag value;
+        eTankPacketFlag value;
         struct {
             std::uint32_t bNone : 1;
             std::uint32_t bUnk : 1;
@@ -145,14 +145,14 @@ struct GameUpdatePacket {
 static_assert((sizeof(GameUpdatePacket) == 56) && "Invalid GameUpdatePacket size.");
 #pragma pack(pop)
 
-inline PacketType get_message_type(const ENetPacket* packet)
+inline ePacketType get_message_type(const ENetPacket* packet)
 {
     if (packet->dataLength > 3) {
-        return static_cast<PacketType>(*packet->data);
+        return static_cast<ePacketType>(*packet->data);
     }
 
     spdlog::error("Bad packet length, ignoring message");
-    return PacketType::NET_MESSAGE_UNKNOWN;
+    return ePacketType::NET_MESSAGE_UNKNOWN;
 }
 
 inline std::string get_text(const ENetPacket* packet)

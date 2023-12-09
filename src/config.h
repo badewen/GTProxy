@@ -21,6 +21,8 @@ public:
     struct Misc {
         bool m_force_update_game_version;
         bool m_force_update_protocol;
+        bool m_bypass_item_dat;
+        bool m_spoof_login;
     };
 public:
     static void Init();

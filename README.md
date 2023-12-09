@@ -1,12 +1,15 @@
 # Growtopia Proxy
+
+Fork of https://github.com/ztztopia/GTProxy
+
 [![Github Action](https://img.shields.io/github/actions/workflow/status/ZTzTopia/GTProxy/cmake_ci.yml?branch=develop&logo=github&logoColor=white)](https://github.com/ZTzTopia/GTProxy/actions?query=workflow%3ACI)
-[![GitHub Release](https://img.shields.io/github/v/release/ZTzTopia/GTProxy.svg?color=orange&logo=docusign&logoColor=orange)](https://github.com/ZTzTopia/GTProxy/releases/latest) 
+[![GitHub Release](https://img.shields.io/github/v/release/ZTzTopia/GTProxy.svg?color=orange&logo=docusign&logoColor=orange)](https://github.com/ZTzTopia/GTProxy/releases/latest)
 
 Growtopia Proxy is a free and open-source proxy for [Growtopia](https://growtopiagame.com/), which enables the user to debug incoming and outgoing packets and even modify them. It is a useful tool for developers who want to analyze the game's network traffic and develop custom features.
 
 ## Goal
 - [ ] Scripting support
-- [ ] World serializer
+- [x] World serializer
 - [x] Handle multiple connection
 - [ ] Friendly GUI 
 - [ ] Botting support
@@ -14,6 +17,7 @@ Growtopia Proxy is a free and open-source proxy for [Growtopia](https://growtopi
 ## Supported Platforms
 - [Windows](https://www.microsoft.com/en-us/windows). Tested with Windows 7, 8, 10 and 11.
 - [GNU/Linux](https://www.gnu.org/gnu/linux-and-gnu.en.html). Tested with Ubuntu and Arch Linux. (but who use GNU/Linux to play growtopia?)
+- [Android](https://www.android.com/). Support is there but has not been tested yet.
 
 ## Features
 - Open source and free to use.
@@ -24,7 +28,7 @@ Growtopia Proxy is a free and open-source proxy for [Growtopia](https://growtopi
 - Includes a configuration file for customization.
 
 ## Download
-The latest application executable can be found on the [releases page](https://github.com/ZTzTopia/GTProxy/releases).
+The latest application executable can be found on the [releases page](https://github.com/badewen/GTProxy/releases).
 
 ## Build
 The following dependencies are required to build from source:
@@ -50,7 +54,9 @@ $ cmake --build .
 - [pcg-cpp](https://github.com/imneme/pcg-cpp): Random number generator
 - [randutils.hpp](https://gist.github.com/imneme/540829265469e673d045): Random utilities
 - [spdlog](https://github.com/gabime/spdlog): Fast C++ logging library
-
+- [OpenSSL](https://www.openssl.org): A robust, commercial-grade, full-featured toolkit for general-purpose cryptography and secure communication. 
+- [readwriterqueue](https://github.com/cameron314/readerwriterqueue): A single-producer, single-consumer lock-free queue for C++.
+- [concurrentqueue](https://github.com/cameron314/concurrentqueue): A fast multi-producer, multi-consumer lock-free concurrent queue for C++11.
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](https://github.com/ZTzTopia/GTProxy/blob/main/LICENSE) file for details.

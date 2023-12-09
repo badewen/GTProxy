@@ -6,18 +6,17 @@
 using namespace commands;
 
 void AutoFishCommand::execute(client::Client *client, std::vector<std::string> args) {
-    auto mod = (modules::AutoFishModule*)client->get_ctx()->ModuleMgr.get_module_by_name("AutoFish_Module").get();
 
     try {
         if (args.empty()) {
-            mod->enable();
+            client->get_ctx()->ModuleMgr.disable_module("AutoFish_Module");
             return;
         }
         if (args[0] == "enable") {
-            mod->enable();
+            client->get_ctx()->ModuleMgr.enable_module("AutoFish_Module");
         }
         else {
-            mod->disable();
+            client->get_ctx()->ModuleMgr.disable_module("AutoFish_Module");
         }
     }
     catch (...) {

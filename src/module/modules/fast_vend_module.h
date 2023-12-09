@@ -22,8 +22,8 @@ namespace modules {
 */
 class FastVendModule : public module::ModuleBase {
 public:
-    explicit FastVendModule(client::Client* client) :
-        module::ModuleBase {"FastVend_Module"}
+    explicit FastVendModule(client::Client* client)
+        : module::ModuleBase("FastVend_Module")
         , m_buy_amount { 0 }
     {}
 

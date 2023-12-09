@@ -72,7 +72,7 @@ void Server::on_connect(ENetPeer* peer)
 
 void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
 {
-    packet::PacketType message_type{packet::get_message_type(packet) };
+    packet::ePacketType message_type{packet::get_message_type(packet) };
     player::Peer* gt_client = get_gt_client_by_raw_peer(peer);
 
     if (message_type == packet::NET_MESSAGE_GENERIC_TEXT) {
@@ -108,6 +108,8 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
                 ctx->OnIncomingVarlist = {};
 
                 ctx->ModuleMgr = module::ModuleManager {};
+                ctx->PlayerInfo = {};
+                ctx->CurrentWorldInfo = {};
 
                 m_client_context_map.insert_or_assign(generate_context_key(login_text_parse), ctx);
             }
@@ -124,7 +126,7 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
                             {"OnConsoleMessage",
                              "[`2GTPROXY`o] if there are another connected guest account on the same device, try disconnecting it or login using a GrowID."},
                             -1, ENET_PACKET_FLAG_RELIABLE), true);
-                    gt_client->disconnect_now();
+                    gt_client->disconnect();
                     return;
                 }
             }

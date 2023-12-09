@@ -15,8 +15,6 @@ Client::Client(server::Server* server, std::shared_ptr<BS::thread_pool> thread_p
     , m_proxy_server { server }
     , m_primary_packet_queue {10}
     , m_secondary_packet_queue {10}
-    , m_curr_world {}
-    , m_curr_player {}
     , m_thread_pool { thread_pool }
     , m_command_manager { this, thread_pool }
 {
@@ -55,7 +53,8 @@ void Client::on_connect(ENetPeer* peer)
 
     // activate default module
     m_ctx->ModuleMgr.get_module_by_name("FastVend_Module")->enable();
-
+    m_ctx->ModuleMgr.get_module_by_name("WorldHandler_Module")->enable();
+    m_ctx->ModuleMgr.get_module_by_name("WhiteSkinFix_Module")->enable();
 }
 
 void Client::on_service_loop()
@@ -79,8 +78,7 @@ void Client::on_service_loop()
 
         if (packet_info.IsOutgoing) {
             send_to_server(packet_info.Packet);
-        }
-        else {
+        } else {
             send_to_gt_client(packet_info.Packet);
         }
     }
@@ -103,15 +101,15 @@ void Client::on_disconnect(ENetPeer* peer)
     // empty out
     PacketInfo temp;
     while (m_primary_packet_queue.try_dequeue(temp)) { enet_packet_destroy(temp.Packet); }
+    while (m_secondary_packet_queue.try_dequeue(temp)) { enet_packet_destroy(temp.Packet); }
 
     if (m_proxy_server->is_gt_client_valid(this)) {
         m_ctx->GtClientPeer->disconnect();
     }
 
-    this->m_curr_player.NetID = 0;
-    this->m_curr_player.PlayerName = "";
-
-    this->m_curr_world.data.clear();
+    this->m_ctx->PlayerInfo.NetID = 0;
+    this->m_ctx->PlayerInfo.PlayerName = "";
+    m_ctx->CurrentWorldInfo.reset();
 
     m_ctx->IsConnected = false;
     m_ctx->GtClientPeer = nullptr;
@@ -119,14 +117,15 @@ void Client::on_disconnect(ENetPeer* peer)
     m_peer_wrapper = nullptr;
     m_ctx = nullptr;
 
+
     m_running.store(false);
 }
 
 void Client::send_to_server(ENetPacket *packet) {
-    packet::PacketType message_type{packet::get_message_type(packet) };
+    packet::ePacketType message_type{packet::get_message_type(packet) };
 
     switch (message_type) {
-        case packet::PacketType::NET_MESSAGE_GAME_PACKET: {
+        case packet::ePacketType::NET_MESSAGE_GAME_PACKET: {
             packet::GameUpdatePacket* game_update_packet = packet::get_tank_packet(packet);
             std::uint8_t* extended_data{packet::get_extended_data(game_update_packet) };
             std::vector<std::uint8_t> extended_data_vector{ extended_data, extended_data + game_update_packet->data_size };
@@ -135,7 +134,7 @@ void Client::send_to_server(ENetPacket *packet) {
                     "Outgoing TankUpdatePacket with netid {}:\n [{}]{}{}",
                     game_update_packet->net_id,
                     game_update_packet->type,
-                    magic_enum::enum_name(static_cast<packet::TankPacketType>(game_update_packet->type)),
+                    magic_enum::enum_name(static_cast<packet::eTankPacketType>(game_update_packet->type)),
                     extended_data
                     ? fmt::format("\n > extended_data: {}", spdlog::to_hex(extended_data_vector))
                     : ""
@@ -163,9 +162,9 @@ void Client::send_to_server(ENetPacket *packet) {
 }
 
 void Client::send_to_gt_client(ENetPacket *packet, bool destroy_packet) {
-    packet::PacketType message_type{packet::get_message_type(packet) };
+    packet::ePacketType message_type{packet::get_message_type(packet) };
 
-    if (message_type != packet::PacketType::NET_MESSAGE_GAME_PACKET) {
+    if (message_type != packet::ePacketType::NET_MESSAGE_GAME_PACKET) {
         std::string message_data{packet::get_text(packet) };
         utils::TextParse text_parse{ message_data };
         if (!text_parse.empty()) {
@@ -184,7 +183,7 @@ void Client::send_to_gt_client(ENetPacket *packet, bool destroy_packet) {
 
         switch (game_update_packet->type) {
 
-            case packet::TankPacketType::PACKET_CALL_FUNCTION: {
+            case packet::eTankPacketType::PACKET_CALL_FUNCTION: {
                 VariantList variant_list{};
                 variant_list.SerializeFromMem(extended_data, static_cast<int>(game_update_packet->data_size));
                 spdlog::info("Incoming VariantList with netid {}:\n{}", game_update_packet->net_id,
@@ -197,7 +196,7 @@ void Client::send_to_gt_client(ENetPacket *packet, bool destroy_packet) {
                         "Incoming TankUpdatePacket with netid {}:\n [{}]{}{}",
                         game_update_packet->net_id,
                         game_update_packet->type,
-                        magic_enum::enum_name(static_cast<packet::TankPacketType>(game_update_packet->type)),
+                        magic_enum::enum_name(static_cast<packet::eTankPacketType>(game_update_packet->type)),
                         extended_data
                         ? fmt::format("\n > extended_data: {}", spdlog::to_hex(extended_data_vector))
                         : ""

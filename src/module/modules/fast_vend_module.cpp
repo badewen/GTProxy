@@ -52,7 +52,7 @@ void FastVendModule::on_dialog_hook(VariantList* var_list, int32_t net_id, bool*
 
     m_client->send_to_server_delayed(
             player::Peer::build_packet(
-                packet::PacketType::NET_MESSAGE_GENERIC_TEXT,
+                packet::ePacketType::NET_MESSAGE_GENERIC_TEXT,
                 dialog_response.build()
             ),
             50

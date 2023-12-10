@@ -27,19 +27,19 @@ void WhiteSkinFixModule::on_incoming_raw_packet_hook(packet::GameUpdatePacket *t
     if (tank_packet->type == packet::PACKET_SEND_MAP_DATA) {
         m_execute_once_on_world_enter = true;
     }
-    if (!m_execute_once_on_world_enter) {
+    if (!m_execute_once_on_world_enter && tank_packet->net_id != m_client->get_ctx()->PlayerInfo.NetID) {
         return;
     }
 
     if (tank_packet->type == packet::PACKET_SET_CHARACTER_STATE) {
-        m_client->send_to_gt_client_delayed(player::Peer::build_raw_packet(tank_packet), 300);
+        m_client->send_to_gt_client_delayed(player::Peer::build_raw_packet(tank_packet), 350);
         *fw_packet = false;
     }
 
 }
 
 void WhiteSkinFixModule::on_varlist_hook(VariantList *varlist, int32_t netid, bool *fw_packet) {
-    if (!m_execute_once_on_world_enter) {
+    if (!m_execute_once_on_world_enter && netid != m_client->get_ctx()->PlayerInfo.NetID) {
         return;
     }
 
@@ -50,7 +50,18 @@ void WhiteSkinFixModule::on_varlist_hook(VariantList *varlist, int32_t netid, bo
                         *varlist,
                         netid,
                         ENET_PACKET_FLAG_RELIABLE
-                    ), 350
+                    ), 300
+            );
+            *fw_packet = false;
+            break;
+        }
+        case "OnSetRoleSkinsAndIcons"_fh: {
+            m_client->send_to_gt_client_delayed(
+                    player::Peer::build_variant_packet(
+                            *varlist,
+                            netid,
+                            ENET_PACKET_FLAG_RELIABLE
+                    ), 400
             );
             *fw_packet = false;
             break;
@@ -65,17 +76,6 @@ void WhiteSkinFixModule::on_varlist_hook(VariantList *varlist, int32_t netid, bo
             );
             *fw_packet = false;
             m_execute_once_on_world_enter = false;
-            break;
-        }
-        case "OnSetRoleSkinsAndIcons"_fh: {
-            m_client->send_to_gt_client_delayed(
-                    player::Peer::build_variant_packet(
-                            *varlist,
-                            netid,
-                            ENET_PACKET_FLAG_RELIABLE
-                    ), 352
-            );
-            *fw_packet = false;
             break;
         }
     }

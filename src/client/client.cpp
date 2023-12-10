@@ -51,10 +51,13 @@ void Client::on_connect(ENetPeer* peer)
 
     m_ctx->ModuleMgr.update_curr_client(this);
 
-    // activate default module
-    m_ctx->ModuleMgr.get_module_by_name("FastVend_Module")->enable();
-    m_ctx->ModuleMgr.get_module_by_name("WorldHandler_Module")->enable();
-    m_ctx->ModuleMgr.get_module_by_name("WhiteSkinFix_Module")->enable();
+    if (m_ctx->InitOnce) {
+        // activate default module
+        m_ctx->ModuleMgr.get_module_by_name("FastVend_Module")->enable();
+        m_ctx->ModuleMgr.get_module_by_name("WorldHandler_Module")->enable();
+        m_ctx->ModuleMgr.get_module_by_name("WhiteSkinFix_Module")->enable();
+        m_ctx->InitOnce = false;
+    }
 }
 
 void Client::on_service_loop()

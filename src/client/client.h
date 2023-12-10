@@ -32,6 +32,7 @@ struct ClientContext {
     bool IsLoginDataSent;
     bool IsConnected;
     bool UseModifiedENet;
+    bool InitOnce = true;
     utils::LoginSpoofData LoginSpoofData;
     std::string LoginData;
     player::Peer* GtClientPeer;

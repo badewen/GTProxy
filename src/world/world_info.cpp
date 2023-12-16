@@ -270,15 +270,16 @@ bool WorldInfo::parse_tile_extra(Tile& tile) {
             *tile.ExtraTileData.GivingTreeExtra = extra_data;
             break;
 		}
-            
-        case SewingMachine: {
-			TileSewingMachineExtra extra_data {};
 
-            extra_data.BoltIdList = get_list<uint32_t, uint32_t>();
-
-            *tile.ExtraTileData.SewingMachineExtra = extra_data;
-            break;
-		}
+        // implementation bugged.
+//        case SewingMachine: {
+//			TileSewingMachineExtra extra_data {};
+//
+//            extra_data.BoltIdList = get_list<uint32_t, uint32_t>();
+//
+//            *tile.ExtraTileData.SewingMachineExtra = extra_data;
+//            break;
+//		}
             
         case CountryFlag: {
 			TileCountryFlagExtra extra_data {};

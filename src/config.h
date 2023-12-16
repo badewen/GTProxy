@@ -3,35 +3,35 @@
 
 class Config {
 public:
-    struct Host {
-        std::uint16_t m_port;
+    struct HostConfig {
+        std::uint16_t port;
     };
 
-    struct Server {
-        std::string m_host;
-        std::string m_game_version;
-        std::string m_platform_id;
-        std::uint8_t m_protocol;
+    struct ServerConfig {
+        std::string host;
+        std::string game_version;
+        std::string platform_id;
+        std::uint8_t protocol;
     };
 
-    struct Command {
-        std::string m_prefix;
+    struct CommandConfig {
+        std::string prefix;
     };
 
-    struct Misc {
-        bool m_force_update_game_version;
-        bool m_force_update_protocol;
-        bool m_bypass_item_dat;
-        bool m_spoof_login;
+    struct MiscConfig {
+        bool force_update_game_version;
+        bool force_update_protocol;
+        bool bypass_item_dat;
+        bool spoof_login;
     };
 public:
-    static void Init();
-    static bool Create(const std::string& file);
-    static bool Load(const std::string& file);
+    void init();
+    bool create(const std::string& file);
+    bool load(const std::string& file);
 
 public:
-    static Host get_host();
-    static Server get_server();
-    static Command get_command();
-    static Misc get_misc();
+    HostConfig Host;
+    ServerConfig Server;
+    CommandConfig Command;
+    MiscConfig Misc;
 };

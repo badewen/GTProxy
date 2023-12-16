@@ -32,7 +32,7 @@ void WhiteSkinFixModule::on_incoming_raw_packet_hook(packet::GameUpdatePacket *t
     }
 
     if (tank_packet->type == packet::PACKET_SET_CHARACTER_STATE) {
-        m_client->send_to_gt_client_delayed(player::Peer::build_raw_packet(tank_packet), 350);
+        m_client->send_to_gt_client_delayed(player::Peer::build_raw_packet(tank_packet), 300);
         *fw_packet = false;
     }
 
@@ -50,7 +50,7 @@ void WhiteSkinFixModule::on_varlist_hook(VariantList *varlist, int32_t netid, bo
                         *varlist,
                         netid,
                         ENET_PACKET_FLAG_RELIABLE
-                    ), 300
+                    ), 250
             );
             *fw_packet = false;
             break;
@@ -61,7 +61,7 @@ void WhiteSkinFixModule::on_varlist_hook(VariantList *varlist, int32_t netid, bo
                             *varlist,
                             netid,
                             ENET_PACKET_FLAG_RELIABLE
-                    ), 400
+                    ), 320
             );
             *fw_packet = false;
             break;
@@ -72,7 +72,7 @@ void WhiteSkinFixModule::on_varlist_hook(VariantList *varlist, int32_t netid, bo
                             *varlist,
                             netid,
                             ENET_PACKET_FLAG_RELIABLE
-                    ), 451
+                    ), 321
             );
             *fw_packet = false;
             m_execute_once_on_world_enter = false;

@@ -5,8 +5,8 @@
 #include "../utils/random.h"
 
 using namespace packet;
+using namespace peer;
 
-namespace player {
 Peer::Peer(ENetPeer* peer)
     : m_peer{ peer }
 {
@@ -20,15 +20,15 @@ ENetPacket* Peer::build_packet(ePacketType type, const std::vector<uint8_t>& dat
 {
     std::vector<std::byte> packet_data(sizeof(type) + data.size());
     std::memcpy(packet_data.data(), &type, sizeof(ePacketType));
-    std::memcpy((void*)((uintptr_t)packet_data.data() + sizeof(ePacketType)), data.data(), data.size());
+    std::memcpy(packet_data.data() + sizeof(ePacketType), data.data(), data.size());
 
     return enet_packet_create(packet_data.data(), packet_data.size(), ENET_PACKET_FLAG_RELIABLE);
 }
 
 ENetPacket* Peer::build_packet(ePacketType type, const std::string& data) {
-    std::vector<uint8_t> temp { data.begin(), data.end() };
+    std::vector<uint8_t> temp { data.data(), data.data() + data.size() - 1};
 
-    temp.push_back('\n');
+    temp.push_back('\0');
 
     return build_packet(type, temp);
 }
@@ -125,5 +125,4 @@ ENetPacket* Peer::build_variant_packet(VariantList variant_list, std::int32_t ne
 int Peer::send_variant(VariantList variant_list, std::int32_t net_id, enet_uint32 flags)
 {
     return send_packet_packet(build_variant_packet(std::move(variant_list), net_id, flags));
-}
 }

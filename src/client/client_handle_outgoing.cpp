@@ -1,7 +1,7 @@
 #include "client.h"
 
 #include "magic_enum.hpp"
-#include "proton/shared/klv.h"
+#include "../utils/klv.h"
 #include "spdlog/fmt/bin_to_hex.h"
 
 #include "../utils/randutils.hpp"
@@ -12,7 +12,7 @@
 namespace client {
 bool Client::process_outgoing_packet(ENetPacket* packet)
 {
-    packet::ePacketType message_type{packet::get_message_type(packet) };
+    packet::ePacketType message_type{packet::get_packet_type(packet) };
     std::string message_data{packet::get_text(packet) };
 
     if (message_type != packet::ePacketType::NET_MESSAGE_GAME_PACKET) {

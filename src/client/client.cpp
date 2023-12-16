@@ -125,7 +125,7 @@ void Client::on_disconnect(ENetPeer* peer)
 }
 
 void Client::send_to_server(ENetPacket *packet) {
-    packet::ePacketType message_type{packet::get_message_type(packet) };
+    packet::ePacketType message_type{packet::get_packet_type(packet) };
 
     switch (message_type) {
         case packet::ePacketType::NET_MESSAGE_GAME_PACKET: {
@@ -165,7 +165,7 @@ void Client::send_to_server(ENetPacket *packet) {
 }
 
 void Client::send_to_gt_client(ENetPacket *packet, bool destroy_packet) {
-    packet::ePacketType message_type{packet::get_message_type(packet) };
+    packet::ePacketType message_type{packet::get_packet_type(packet) };
 
     if (message_type != packet::ePacketType::NET_MESSAGE_GAME_PACKET) {
         std::string message_data{packet::get_text(packet) };

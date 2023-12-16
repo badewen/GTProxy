@@ -5,7 +5,7 @@
 #include <string>
 #include "../utils/hash.h"
 
-namespace proton {
+namespace utils {
 static std::string generate_klv(const int protocol, const std::string& version, const std::string& rid) {
     constexpr std::array salts = {
         "e9fc40ec08f9ea6393f59c65e37f750aacddf68490c4f92d0d2523a5bc02ea63",

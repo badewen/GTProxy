@@ -4,7 +4,7 @@
 
 #include <optional>
 
-#include <proton/shared/util/Variant.h>
+#include "proton/Variant.h"
 #include <enet/enet.h>
 
 #include "../../network/packet.h"

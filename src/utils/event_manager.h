@@ -16,13 +16,13 @@ public:
     // returns true if successful
     template<typename ...FParams>
     // params = argument passed to sigslot.connect
-    bool Register(std::string id, FParams&&... params) {
+    bool Register(const std::string id, FParams&&... params) {
         if (m_registered_event.find(id) != m_registered_event.end()) { return false; }
         m_registered_event.insert_or_assign(id, m_event.connect(std::forward<FParams>(params)...));
         return true;
     }
 
-    void Remove(std::string id) {
+    void Remove(const std::string& id) {
         try {
             m_registered_event.at(id).disconnect();
             m_registered_event.erase(id);

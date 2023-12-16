@@ -24,6 +24,7 @@ bool WorldInfo::serialize(std::vector<uint8_t> raw_data) {
         if (!get_next_tile(temp)) {
             return false;
         }
+        Tiles.push_back(temp);
     }
 
     parse_item_drops();

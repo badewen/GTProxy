@@ -2,7 +2,7 @@
 
 #include "module_base.h"
 
-#include <proton/shared/util/Variant.h>
+#include "proton/Variant.h"
 #include <enet/enet.h>
 
 #include "../../utils/text_parse.h"

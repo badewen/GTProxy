@@ -1,11 +1,11 @@
 #pragma once
 #include <string>
 #include "enet/include/enet/enet.h"
-#include "util/Variant.h"
+#include "proton/Variant.h"
 #include <mutex>
 #include "../network/packet.h"
 
-namespace player {
+namespace peer {
 class Peer {
 public:
     explicit Peer(ENetPeer* peer);
@@ -22,7 +22,7 @@ public:
 
     int send_packet(packet::ePacketType type, const std::vector<uint8_t> &data);
     int send_packet(packet::ePacketType type, const std::string& data);
-    int send_packet_packet(ENetPacket* packet, bool destroy_packet = false);
+    int send_enet_packet(ENetPacket* packet, bool destroy_packet = false);
     int send_raw_packet(packet::GameUpdatePacket *game_update_packet,
                     packet::ePacketType type = packet::ePacketType::NET_MESSAGE_GAME_PACKET,
                     std::size_t length = sizeof(packet::GameUpdatePacket),

@@ -3,7 +3,7 @@
 #include <chrono>
 
 #include <magic_enum.hpp>
-#include <proton/shared/klv.h>
+#include "../utils/klv.h"
 
 #include "../server/server.h"
 #include "../utils/text_parse.h"
@@ -13,7 +13,7 @@ using namespace std::chrono_literals;
 namespace client {
 bool Client::process_incoming_packet(ENetPacket* packet)
 {
-    packet::ePacketType message_type{packet::get_message_type(packet) };
+    packet::ePacketType message_type{packet::get_packet_type(packet) };
 //    std::string message_data{ packet::get_text(packet) };
 
     if (message_type != packet::ePacketType::NET_MESSAGE_GAME_PACKET) {

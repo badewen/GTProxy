@@ -12,7 +12,7 @@
 #include "../utils/randutils.hpp"
 #include "../utils/random.h"
 #include "../utils/text_parse.h"
-#include "../utils/login_spoof_data.h"
+#include "../utils/login_data_spoof.h"
 #include "../world/world_info.h"
 #include "../player/player.h"
 #include "../utils/timer.h"

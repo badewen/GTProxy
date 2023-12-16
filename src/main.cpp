@@ -48,8 +48,9 @@ int main()
 
     spdlog::info("Starting GTProxy v{}...", GTPROXY_VERSION);
 
-    Config::Init();
-    if (!Config::Load("config.json")) {
+    Config conf {};
+    conf.init();
+    if (!conf.load("config.json")) {
         return 1;
     }
 
@@ -59,13 +60,13 @@ int main()
         return 1;
     }
 
-    if (!enet_wrapper::ENetWrapper::one_time_init()) {
+    if (!enet_initialize()) {
         spdlog::error("Failed to initialize ENet server.");
         return 1;
     }
 
     auto server{ std::make_unique<server::Server>() };
-    if (!server->start()) {
+    if (!server->start(conf)) {
         return 1;
     }
 

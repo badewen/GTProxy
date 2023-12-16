@@ -140,12 +140,12 @@ struct GameUpdatePacket {
 
     uint32_t tile_x, tile_y; // target tile coordinate.
 
-    uint32_t data_size;
+    uint32_t extended_data_length;
 };
 static_assert((sizeof(GameUpdatePacket) == 56) && "Invalid GameUpdatePacket size.");
 #pragma pack(pop)
 
-inline ePacketType get_message_type(const ENetPacket* packet)
+inline ePacketType get_packet_type(const ENetPacket* packet)
 {
     if (packet->dataLength > 3) {
         return static_cast<ePacketType>(*packet->data);
@@ -157,7 +157,6 @@ inline ePacketType get_message_type(const ENetPacket* packet)
 
 inline std::string get_text(const ENetPacket* packet)
 {
-//    std::memset(packet->data + packet->dataLength - 1, 0, 1);
     std::vector<char> temp (packet->data + 4, packet->data + packet->dataLength - 1);
 
     return { temp.begin(), temp.end() };
@@ -174,30 +173,22 @@ inline GameUpdatePacket* get_tank_packet(const ENetPacket* packet)
         return game_update_packet;
     }
 
-    if (packet->dataLength < game_update_packet->data_size + sizeof(GameUpdatePacket)) {
+    if (packet->dataLength < game_update_packet->extended_data_length + sizeof(GameUpdatePacket)) {
         spdlog::error("Packet too small for extended packet to be valid");
-        spdlog::error(
-            "Sizeof float is {}.  TankUpdatePacket size: {}",
-            sizeof(float),
-            sizeof(GameUpdatePacket)
-        );
         return nullptr;
     }
 
     return game_update_packet;
 }
 
-inline std::uint8_t* get_extended_data(GameUpdatePacket* game_update_packet)
+inline std::vector<uint8_t> get_extended_data(GameUpdatePacket* game_update_packet)
 {
     if (!game_update_packet->flags.bExtended) {
-        return nullptr;
+        return {};
     }
 
-    struct ExtendedPacket {
-        std::uint8_t pad[sizeof(GameUpdatePacket)];
-        std::uint32_t data;
+    return { (uint8_t*)(((uintptr_t)game_update_packet) + sizeof(GameUpdatePacket)),
+             (uint8_t*)(((uintptr_t)game_update_packet) + sizeof(GameUpdatePacket) + game_update_packet->extended_data_length - 1)
     };
-
-    return reinterpret_cast<std::uint8_t*>(&reinterpret_cast<ExtendedPacket*>(game_update_packet)->data);
 }
 }

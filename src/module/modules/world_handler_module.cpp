@@ -31,10 +31,10 @@ void WorldHandlerModule::on_incoming_raw_packet_hook(packet::GameUpdatePacket *t
 
 void WorldHandlerModule::on_receive_world_data(std::vector<uint8_t> data) {
 
-    if (!m_client->get_ctx()->CurrentWorldInfo.serialize(std::move(data))) {
-        m_client->log_to_client("`4WORLD PARSING FAILED. DUMPING CURRENT WORLD DATA...");
-        m_client->execute_command("save", {m_client->get_ctx()->CurrentWorldInfo.Name});
-    } else {
-        m_client->log_to_client("`2WORLD PARSING SUCCESS");
-    }
+//    if (!m_client->get_ctx()->CurrentWorldInfo.serialize(std::move(data))) {
+//        m_client->log_to_client("`4WORLD PARSING FAILED. DUMPING CURRENT WORLD DATA...");
+//        m_client->execute_command("save", {m_client->get_ctx()->CurrentWorldInfo.Name});
+//    } else {
+//        m_client->log_to_client("`2WORLD PARSING SUCCESS");
+//    }
 }

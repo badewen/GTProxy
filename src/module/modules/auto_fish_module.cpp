@@ -54,6 +54,11 @@ void AutoFishModule::on_splash_audio_hook(VariantList* varlist, int32_t net_id, 
         return;
     }
 
+    if (m_client->get_ctx()->PlayerInfo.NetID != net_id) {
+        m_client->log_to_client("Not out splash packet");
+        return;
+    }
+
     m_client->queue_packet(player::Peer::build_raw_packet(&m_fishing_packet.value()), true);
     m_client->queue_packet_delayed(player::Peer::build_raw_packet(&m_fishing_packet.value()), true, 250);
 }

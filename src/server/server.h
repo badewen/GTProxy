@@ -53,6 +53,8 @@ private:
     // gt client refers to the actual gt client that is connected to the server
     std::shared_ptr<peer::Peer> m_gt_peer;
 
+    bool m_running;
+
     Config m_config;
     ENetHost* m_enet_host;
 

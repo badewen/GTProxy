@@ -28,7 +28,7 @@ public:
         std::vector<std::string> tokens{};
         for (auto&& token : string | std::views::split(delimiter)) {
             if (token.empty()) {
-                continue;
+                tokens.emplace_back("");
             }
 
             tokens.emplace_back(token.begin(), token.end());

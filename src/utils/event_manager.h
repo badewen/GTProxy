@@ -32,6 +32,12 @@ public:
         }
     }
 
+    void RemoveAll() {
+        std::for_each(m_registered_event.begin(), m_registered_event.end(), [&](const auto &item) {
+            Remove(item.first);
+        });
+    }
+
     void Invoke(Params... params) { m_event(std::forward<Params>(params)...); }
 
 private:

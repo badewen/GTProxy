@@ -1,225 +1,190 @@
-#include <magic_enum.hpp>
-#include <spdlog/fmt/bin_to_hex.h>
-
 #include "client.h"
+
+#include <utility>
+
 #include "../server/server.h"
-#include "../utils/text_parse.h"
-#include "enet/enet.h"
-#include "../utils/timer.h"
+#include <enet/enet.h>
+#include <magic_enum.hpp>
 
-using namespace std::chrono_literals;
+using namespace client;
 
-namespace client {
-Client::Client(server::Server* server, std::shared_ptr<BS::thread_pool> thread_pool)
-    : enet_wrapper::ENetClient{}
-    , m_proxy_server { server }
-    , m_primary_packet_queue {10}
-    , m_secondary_packet_queue {10}
-    , m_thread_pool { thread_pool }
-    , m_command_manager { this, thread_pool }
-{
-    spdlog::debug("NEW CLIENT CLASS IS CREATED");
+bool Client::init(server::Server* proxy_server, std::shared_ptr<BS::thread_pool> thread_pool) {
+    m_proxy_server = proxy_server;
+    m_thread_pool = thread_pool;
+
+    return true;
 }
 
-Client::~Client() = default;
+bool Client::start() {
+    create_host();
 
-void Client::start(std::shared_ptr<ClientContext> new_ctx)
-{
-    this->m_ctx = std::move(new_ctx);
-    if (!m_host) {
-        if (!create_host(1, m_ctx->UseModifiedENet)) {
-            spdlog::error("Failed to create ENet client host.");
-            return;
-        }
-    }
+    m_running = true;
 
-    spdlog::info("Connecting to Growtopia server ({}:{}).", m_ctx->RedirectIp, m_ctx->RedirectPort);
-
-    if (!connect(m_ctx->RedirectIp,
-                 m_ctx->RedirectPort,
-                 m_proxy_server->get_gt_client_connect_id(this))) {
-        spdlog::error("Failed connect to Growtopia server.");
-        return;
-    }
-
-    run_service();
+    return true;
 }
 
-void Client::on_connect(ENetPeer* peer)
-{
-    spdlog::info("Connected to Growtopia server.");
-
-    m_ctx->ModuleMgr.update_curr_client(this);
-
-    if (m_ctx->InitOnce) {
-        // activate default module
-        m_ctx->ModuleMgr.get_module_by_name("FastVend_Module")->enable();
-        m_ctx->ModuleMgr.get_module_by_name("WorldHandler_Module")->enable();
-        m_ctx->ModuleMgr.get_module_by_name("WhiteSkinFix_Module")->enable();
-        m_ctx->InitOnce = false;
-    }
+bool Client::connect(ENetAddress addr) {
+    return enet_host_connect(m_enet_host, &addr, 1, NULL, m_proxy_server->get_gt_peer()->get_connect_id());
 }
 
-void Client::on_service_loop()
-{
-    PacketInfo packet_info;
+void Client::stop() {
+    m_running = false;
+
+    m_gt_server_peer->disconnect_now();
+
+    m_proxy_server = nullptr;
+    m_thread_pool.reset();
+    m_gt_server_peer.reset();
+
+    m_on_connect_callbacks.RemoveAll();
+    m_on_disconnect_callbacks.RemoveAll();
+    m_on_incoming_varlist.RemoveAll();
+    m_on_incoming_packet.RemoveAll();
+    m_on_incoming_tank_packet.RemoveAll();
+
+    enet_host_destroy(m_enet_host);
+}
+
+void Client::on_connect(ENetPeer *peer) {
+    m_gt_server_peer = std::make_shared<peer::Peer>(peer);
+
+    m_thread_pool->push_task(&client::Client::client_thread, this);
+
+    m_on_connect_callbacks.Invoke(m_gt_server_peer);
+}
+
+void Client::on_receive(ENetPeer *peer, ENetPacket *packet) {
+    packet::ePacketType packet_type = packet::get_packet_type(packet);
+
     bool forward_packet = true;
 
-    while (is_valid() && m_primary_packet_queue.try_dequeue(packet_info) && m_ctx) {
-
-        if (!packet_info.Delay.IsDone()) {
-            m_secondary_packet_queue.enqueue(packet_info);
-            continue;
-        }
-
-        if (packet_info.ShouldProcess) {
-            forward_packet = packet_info.IsOutgoing ? process_outgoing_packet(packet_info.Packet)
-                                                    : process_incoming_packet(packet_info.Packet);
-        }
-
-        if (!forward_packet) continue;
-
-        if (packet_info.IsOutgoing) {
-            send_to_server(packet_info.Packet);
-        } else {
-            send_to_gt_client(packet_info.Packet);
-        }
-    }
-    std::swap(m_primary_packet_queue, m_secondary_packet_queue);
-}
-
-void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
-{
-    if (!m_proxy_server->is_gt_client_valid(this)) {
-        return;
-    }
-
-    queue_packet(packet, false);
-}
-
-void Client::on_disconnect(ENetPeer* peer)
-{
-    spdlog::info("Disconnected from growtopia server.");
-
-    // empty out
-    PacketInfo temp;
-    while (m_primary_packet_queue.try_dequeue(temp)) { enet_packet_destroy(temp.Packet); }
-    while (m_secondary_packet_queue.try_dequeue(temp)) { enet_packet_destroy(temp.Packet); }
-
-    if (m_proxy_server->is_gt_client_valid(this)) {
-        m_ctx->GtClientPeer->disconnect();
-    }
-
-    this->m_ctx->PlayerInfo.NetID = 0;
-    this->m_ctx->PlayerInfo.PlayerName = "";
-    m_ctx->CurrentWorldInfo.reset();
-
-    m_ctx->IsConnected = false;
-    m_ctx->GtClientPeer = nullptr;
-    m_ctx->ModuleMgr.update_curr_client(nullptr);
-    m_peer_wrapper = nullptr;
-    m_ctx = nullptr;
-
-
-    m_running.store(false);
-}
-
-void Client::send_to_server(ENetPacket *packet) {
-    packet::ePacketType message_type{packet::get_packet_type(packet) };
-
-    switch (message_type) {
+    switch (packet_type) {
         case packet::ePacketType::NET_MESSAGE_GAME_PACKET: {
-            packet::GameUpdatePacket* game_update_packet = packet::get_tank_packet(packet);
-            std::uint8_t* extended_data{packet::get_extended_data(game_update_packet) };
-            std::vector<std::uint8_t> extended_data_vector{ extended_data, extended_data + game_update_packet->data_size };
+            if (packet::get_tank_packet(packet)->type == packet::eTankPacketType::PACKET_CALL_FUNCTION) {
+                std::vector<uint8_t> ext_data = packet::get_extended_data(packet::get_tank_packet(packet));
+                VariantList varlist {};
 
-            spdlog::info(
-                    "Outgoing TankUpdatePacket with netid {}:\n [{}]{}{}",
-                    game_update_packet->net_id,
-                    game_update_packet->type,
-                    magic_enum::enum_name(static_cast<packet::eTankPacketType>(game_update_packet->type)),
-                    extended_data
-                    ? fmt::format("\n > extended_data: {}", spdlog::to_hex(extended_data_vector))
-                    : ""
-            );
-            break;
+                varlist.SerializeFromMem(ext_data.data(), ext_data.size());
+
+                m_on_incoming_varlist.Invoke(&varlist, m_gt_server_peer, &forward_packet);
+            }
+
+            m_on_incoming_tank_packet.Invoke(packet::get_tank_packet(packet), m_gt_server_peer, &forward_packet);
         }
-
         default: {
-            std::string message_data{packet::get_text(packet) };
-            utils::TextParse text_parse{ message_data };
-
-            if (!text_parse.empty()) {
-                spdlog::info(
-                        "Outgoing MessagePacket with netid :\n{} [{}]:\n{}\n",
-                        magic_enum::enum_name(message_type),
-                        message_type,
-                        fmt::join(text_parse.get_all_array(), "\r\n")
-                );
-            }
-            break;
+            m_on_incoming_packet.Invoke(packet, m_gt_server_peer, &forward_packet);
         }
     }
 
-    m_peer_wrapper->send_packet_packet(packet);
+    if (forward_packet) {
+        m_proxy_server->send_to_gt_client(packet, true);
+    }
 }
 
-void Client::send_to_gt_client(ENetPacket *packet, bool destroy_packet) {
-    packet::ePacketType message_type{packet::get_packet_type(packet) };
+void Client::on_disconnect(ENetPeer *peer) {
+    m_on_disconnect_callbacks.Invoke(m_gt_server_peer);
 
-    if (message_type != packet::ePacketType::NET_MESSAGE_GAME_PACKET) {
-        std::string message_data{packet::get_text(packet) };
-        utils::TextParse text_parse{ message_data };
-        if (!text_parse.empty()) {
-            spdlog::info(
-                    "Incoming MessagePacket:\n{} [{}]:\n{}\n",
-                    magic_enum::enum_name(message_type),
-                    message_type,
-                    fmt::join(text_parse.get_all_array(), "\r\n"));
+    m_gt_server_peer.reset();
+}
+
+void Client::client_thread() {
+    while (m_running) {
+        ENetEvent event{};
+        while (enet_host_service(m_enet_host, &event, 1)) {
+            switch (event.type) {
+                case ENET_EVENT_TYPE_CONNECT: {
+                    on_connect(event.peer);
+                    break;
+                }
+                case ENET_EVENT_TYPE_DISCONNECT: {
+                    on_disconnect(event.peer);
+                    break;
+                }
+                case ENET_EVENT_TYPE_RECEIVE: {
+                    on_receive(event.peer, event.packet);
+                    break;
+                }
+            }
+            enet_packet_destroy(event.packet);
         }
     }
-    else {
-        packet::GameUpdatePacket* game_update_packet = packet::get_tank_packet(packet);
+}
 
-        std::uint8_t* extended_data{packet::get_extended_data(game_update_packet) };
-        std::vector<std::uint8_t> extended_data_vector{ extended_data, extended_data + game_update_packet->data_size };
+void Client::create_host() {
+    m_enet_host = enet_host_create(NULL, 1, 1, 0, 0);
 
-        switch (game_update_packet->type) {
+    enet_host_compress_with_range_coder(m_enet_host);
 
-            case packet::eTankPacketType::PACKET_CALL_FUNCTION: {
-                VariantList variant_list{};
-                variant_list.SerializeFromMem(extended_data, static_cast<int>(game_update_packet->data_size));
-                spdlog::info("Incoming VariantList with netid {}:\n{}", game_update_packet->net_id,
-                                variant_list.GetContentsAsDebugString());
-                break;
+    m_enet_host->checksum = enet_crc32;
+    m_enet_host->usingNewPacket = true;
+}
+
+void Client::send_to_gt_server(ENetPacket *packet, bool invoke_event) {
+
+    bool forward_packet = true;
+
+    if (invoke_event) {
+        m_proxy_server->outgoing_packet_events_invoke(packet, &forward_packet);
+    }
+
+    if (forward_packet) {
+        m_proxy_server->print_packet_info_outgoing(packet);
+        m_gt_server_peer->send_enet_packet(packet);
+    }
+}
+
+void Client::incoming_packet_events_invoke(ENetPacket *packet, bool *forward_packet) {
+    packet::ePacketType packet_type = packet::get_packet_type(packet);
+
+    switch (packet_type) {
+        case packet::ePacketType::NET_MESSAGE_GAME_PACKET: {
+            packet::GameUpdatePacket* tank_pkt = packet::get_tank_packet(packet);
+
+            if (tank_pkt->type == packet::eTankPacketType::PACKET_CALL_FUNCTION) {
+                VariantList varlist {};
+                varlist.SerializeFromMem(packet::get_extended_data(tank_pkt).data(), tank_pkt->extended_data_length);
+
+                m_on_incoming_varlist.Invoke(&varlist, m_gt_server_peer, forward_packet);
             }
 
-            default: {
-                spdlog::info(
-                        "Incoming TankUpdatePacket with netid {}:\n [{}]{}{}",
-                        game_update_packet->net_id,
-                        game_update_packet->type,
-                        magic_enum::enum_name(static_cast<packet::eTankPacketType>(game_update_packet->type)),
-                        extended_data
-                        ? fmt::format("\n > extended_data: {}", spdlog::to_hex(extended_data_vector))
-                        : ""
-                );
-                break;
-            }
+            m_on_incoming_tank_packet.Invoke(packet::get_tank_packet(packet), m_gt_server_peer, forward_packet);
+        }
+        default: {
+            m_on_incoming_packet.Invoke(packet, m_gt_server_peer, forward_packet);
         }
     }
 
-    m_ctx->GtClientPeer->send_packet_packet(packet, destroy_packet);
 }
 
-void Client::log_to_client(const std::string &message) {
-    if (!is_valid() && is_ctx_empty()) return;
+void Client::print_packet_info_incoming(ENetPacket *packet) {
+    packet::ePacketType packet_type = packet::get_packet_type(packet);
 
-    send_to_gt_client( player::Peer::build_variant_packet({
-            "OnConsoleMessage",
-            fmt::format("[`2GTPROXY`o] {}", message)
-        }, -1, ENET_PACKET_FLAG_RELIABLE)
-    );
-}
+    switch (packet_type) {
+        case packet::ePacketType::NET_MESSAGE_GAME_PACKET: {
+            packet::GameUpdatePacket* tank_pkt = packet::get_tank_packet(packet);
 
+            if (tank_pkt->type == packet::eTankPacketType::PACKET_CALL_FUNCTION) {
+                VariantList varlist {};
+                varlist.SerializeFromMem(packet::get_extended_data(tank_pkt).data(), tank_pkt->extended_data_length);
+
+                spdlog::info("Incoming VariantList with netid {} \n {}",
+                             tank_pkt->net_id,
+                             varlist.GetContentsAsDebugString()
+                             );
+            }
+
+            spdlog::info("Incoming {}[{}] TankPacket with netid {}",
+                         magic_enum::enum_name(tank_pkt->type),
+                         tank_pkt->type,
+                         tank_pkt->net_id
+            );
+        }
+        default: {
+            spdlog::info("Incoming {}[{}] packet \n{}",
+                         magic_enum::enum_name(packet_type),
+                         packet_type,
+                         packet::get_text(packet)
+            );
+        }
+    }
 }

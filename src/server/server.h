@@ -9,13 +9,16 @@
 #include "../utils/event_manager.h"
 
 namespace server {
-// this class interface directly with the growtopia client.
+// this class interface directly with the growtopia client and handles outgoing packets.
+// just a barebone server implementation that is only capable of receiving growtopia packets
+// and forward then invoking the packet events callbacks
 class Server {
 public:
     explicit Server() = default;
     ~Server() = default;
 
-    bool start(Config conf);
+    bool init(Config conf);
+    bool start();
     void stop();
 
     void on_connect(ENetPeer* peer);
@@ -25,6 +28,12 @@ public:
     peer::Peer* get_gt_peer() { return m_gt_peer.get(); }
     client::Client* get_client() { return m_client.get(); }
     Config* get_config() { return &m_config; }
+
+    void outgoing_packet_events_invoke(ENetPacket* packet, bool* forward_packet);
+
+    void send_to_gt_client(ENetPacket* packet, bool invoke_event = true);
+
+    void print_packet_info_outgoing(ENetPacket* packet);
 
     template<typename FuncType>
     inline void add_on_connect_callback(std::string id, FuncType func) { m_on_connect_callbacks.Register(id, func); }
@@ -44,7 +53,7 @@ public:
 
 private:
     void server_thread();
-    void create_host(bool use_new_packet);
+    void create_host();
 
 private:
     std::shared_ptr<BS::thread_pool> m_thread_pool;
@@ -53,10 +62,10 @@ private:
     // gt client refers to the actual gt client that is connected to the server
     std::shared_ptr<peer::Peer> m_gt_peer;
 
-    bool m_running;
+    bool m_running {};
 
     Config m_config;
-    ENetHost* m_enet_host;
+    ENetHost* m_enet_host {};
 
     utils::EventManager<std::shared_ptr<peer::Peer>> m_on_connect_callbacks;
     utils::EventManager<std::shared_ptr<peer::Peer>> m_on_disconnect_callbacks;

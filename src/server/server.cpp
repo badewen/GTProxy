@@ -3,15 +3,44 @@
 #include <utility>
 
 #include <enet/enet.h>
+#include <magic_enum.hpp>
 
 using namespace server;
 
-bool Server::start(Config conf) {
+bool Server::init(Config conf) {
     m_config = std::move(conf);
 
+    return m_client->init(this, m_thread_pool);
+}
 
-    m_thread_pool->push_task(&Server::server_thread, this);
-    m_thread_pool->push_task(&client::Client::start, m_client);
+bool Server::start() {
+    create_host();
+
+    m_running = true;
+
+    m_thread_pool->push_task(&client::Client::start, m_client.get());
+    m_thread_pool->push_task(&server::Server::server_thread, this);
+
+    return true;
+}
+
+void Server::stop() {
+    m_client->stop();
+    m_gt_peer->disconnect_now();
+
+    m_running = false;
+
+    m_thread_pool->purge();
+
+    m_client.reset();
+    m_gt_peer.reset();
+
+    m_on_connect_callbacks.RemoveAll();
+    m_on_disconnect_callbacks.RemoveAll();
+    m_on_outgoing_packet.RemoveAll();
+    m_on_outgoing_tank_packet.RemoveAll();
+
+    enet_host_destroy(m_enet_host);
 }
 
 void Server::on_connect(ENetPeer *peer) {
@@ -35,7 +64,7 @@ void Server::on_receive(ENetPeer *peer, ENetPacket *packet) {
     }
 
     if (forward_packet) {
-        m_client->get_server_peer()->send_enet_packet(packet);
+        m_client->send_to_gt_server(packet, true);
     }
 }
 
@@ -68,7 +97,7 @@ void Server::server_thread() {
     }
 }
 
-void Server::create_host(bool use_new_packet) {
+void Server::create_host() {
     ENetAddress addr {};
     addr.host = ENET_HOST_ANY;
     addr.port = m_config.Host.port;
@@ -78,5 +107,56 @@ void Server::create_host(bool use_new_packet) {
     enet_host_compress_with_range_coder(m_enet_host);
 
     m_enet_host->checksum = enet_crc32;
-    m_enet_host->usingNewPacketForServer = use_new_packet;
+    m_enet_host->usingNewPacketForServer = true;
+}
+
+void Server::send_to_gt_client(ENetPacket *packet, bool invoke_event) {
+
+    bool forward_packet = true;
+
+    if (invoke_event) {
+        // invoke incoming packet events.
+        m_client->incoming_packet_events_invoke(packet, &forward_packet);
+    }
+
+    if (forward_packet) {
+        m_client->print_packet_info_incoming(packet);
+        m_gt_peer->send_enet_packet(packet);
+    }
+}
+
+void Server::outgoing_packet_events_invoke(ENetPacket *packet, bool *forward_packet) {
+    packet::ePacketType packet_type = packet::get_packet_type(packet);
+
+    switch (packet_type) {
+        case packet::ePacketType::NET_MESSAGE_GAME_PACKET: {
+            m_on_outgoing_tank_packet.Invoke(packet::get_tank_packet(packet), m_gt_peer, forward_packet);
+        }
+        default: {
+            m_on_outgoing_packet.Invoke(packet, m_gt_peer, forward_packet);
+        }
+    }
+}
+
+void Server::print_packet_info_outgoing(ENetPacket *packet) {
+    packet::ePacketType packet_type = packet::get_packet_type(packet);
+
+    switch (packet_type) {
+        case packet::ePacketType::NET_MESSAGE_GAME_PACKET: {
+            packet::GameUpdatePacket* tank_pkt = packet::get_tank_packet(packet);
+
+            spdlog::info("Outgoing {}[{}] TankPacket with netid {}",
+                         magic_enum::enum_name(tank_pkt->type),
+                         tank_pkt->type,
+                         tank_pkt->net_id
+            );
+        }
+        default: {
+            spdlog::info("Outgoing {}[{}] packet \n{}",
+                         magic_enum::enum_name(packet_type),
+                         packet_type,
+                         packet::get_text(packet)
+            );
+        }
+    }
 }

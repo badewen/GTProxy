@@ -30,7 +30,7 @@ bool Client::process_incoming_packet(ENetPacket* packet)
 
             utils::TextParse text_parse = utils::TextParse{this->m_ctx->LoginData};
 
-            utils::LoginSpoofData spoof_data = this->m_ctx->LoginSpoofData;
+            utils::LoginSpoofData spoof_data = this->m_ctx->LoginData;
 
             text_parse.add_key_once("klv|");
 

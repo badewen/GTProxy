@@ -5,6 +5,7 @@
 #include <memory>
 #include "enet/enet.h"
 #include <spdlog/spdlog.h>
+#include <proton/Variant.h>
 
 namespace packet {
 enum ePacketType : std::uint32_t {
@@ -145,6 +146,8 @@ struct GameUpdatePacket {
 static_assert((sizeof(GameUpdatePacket) == 56) && "Invalid GameUpdatePacket size.");
 #pragma pack(pop)
 
+
+
 inline ePacketType get_packet_type(const ENetPacket* packet)
 {
     if (packet->dataLength > 3) {
@@ -191,4 +194,18 @@ inline std::vector<uint8_t> get_extended_data(GameUpdatePacket* game_update_pack
              (uint8_t*)(((uintptr_t)game_update_packet) + sizeof(GameUpdatePacket) + game_update_packet->extended_data_length - 1)
     };
 }
+
+inline VariantList get_varlist(GameUpdatePacket* game_update_packet)
+{
+    if (game_update_packet->type != eTankPacketType::PACKET_CALL_FUNCTION) {
+        return {};
+    }
+
+    VariantList varlist{};
+
+    varlist.SerializeFromMem(get_extended_data(game_update_packet).data(), get_extended_data(game_update_packet).size());
+
+    return varlist;
+}
+
 }

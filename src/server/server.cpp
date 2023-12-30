@@ -18,6 +18,12 @@ bool Server::start() {
 
     m_running = true;
 
+    m_module_manager.set_proxy_server_ptr(this);
+
+    m_module_manager.enable_module("ConnectionHandler_Module");
+    m_module_manager.enable_module("WhiteSkinFix_Module");
+    m_module_manager.enable_module("WorldHandler_Module");
+
     m_thread_pool->push_task(&client::Client::start, m_client.get());
     m_thread_pool->push_task(&server::Server::server_thread, this);
 
@@ -25,6 +31,8 @@ bool Server::start() {
 }
 
 void Server::stop() {
+    m_module_manager.disable_all_module();
+
     m_client->stop();
     m_gt_peer->disconnect_now();
 

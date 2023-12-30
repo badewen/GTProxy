@@ -1,11 +1,11 @@
 #include "world_handler_module.h"
 
-#include "../../client/client.h"
+#include "../../../client/client.h"
 
 using namespace modules;
 
 void WorldHandlerModule::on_enable() {
-    m_client->get_ctx()->OnIncomingTankPacket.Register(
+    m_proxy_server->get_ctx()->OnIncomingTankPacket.Register(
             "WorldHandler_Module",
             &WorldHandlerModule::on_incoming_raw_packet_hook,
             this
@@ -13,7 +13,7 @@ void WorldHandlerModule::on_enable() {
 }
 
 void WorldHandlerModule::on_disable() {
-    m_client->get_ctx()->OnIncomingTankPacket.Remove("WorldHandler_Module");
+    m_proxy_server->get_ctx()->OnIncomingTankPacket.Remove("WorldHandler_Module");
 }
 
 void WorldHandlerModule::on_incoming_raw_packet_hook(packet::GameUpdatePacket *tank_packet, bool *fw_packet) {

@@ -1,17 +1,17 @@
 #include "white_skin_fix_module.h"
 
-#include "../../client/client.h"
-#include "../../utils/hash.h"
+#include "../../../client/client.h"
+#include "../../../utils/hash.h"
 
 using namespace modules;
 
 void WhiteSkinFixModule::on_enable() {
-    m_client->get_ctx()->OnIncomingTankPacket.Register(
+    m_proxy_server->get_ctx()->OnIncomingTankPacket.Register(
             "WhiteSkinFix_Module",
             &WhiteSkinFixModule::on_incoming_raw_packet_hook,
             this
     );
-    m_client->get_ctx()->OnIncomingVarlist.Register(
+    m_proxy_server->get_ctx()->OnIncomingVarlist.Register(
             "WhiteSkinFix_Module",
             &WhiteSkinFixModule::on_varlist_hook,
             this
@@ -19,15 +19,15 @@ void WhiteSkinFixModule::on_enable() {
 }
 
 void WhiteSkinFixModule::on_disable() {
-    m_client->get_ctx()->OnIncomingTankPacket.Remove("WhiteSkinFix_Module");
-    m_client->get_ctx()->OnIncomingVarlist.Remove("WhiteSkinFix_Module");
+    m_proxy_server->get_ctx()->OnIncomingTankPacket.Remove("WhiteSkinFix_Module");
+    m_proxy_server->get_ctx()->OnIncomingVarlist.Remove("WhiteSkinFix_Module");
 }
 
 void WhiteSkinFixModule::on_incoming_raw_packet_hook(packet::GameUpdatePacket *tank_packet, bool *fw_packet) {
     if (tank_packet->type == packet::PACKET_SEND_MAP_DATA) {
         m_execute_once_on_world_enter = true;
     }
-    if (!m_execute_once_on_world_enter && tank_packet->net_id != m_client->get_ctx()->PlayerInfo.NetID) {
+    if (!m_execute_once_on_world_enter && tank_packet->net_id != m_proxy_server->get_ctx()->PlayerInfo.NetID) {
         return;
     }
 
@@ -39,7 +39,7 @@ void WhiteSkinFixModule::on_incoming_raw_packet_hook(packet::GameUpdatePacket *t
 }
 
 void WhiteSkinFixModule::on_varlist_hook(VariantList *varlist, int32_t netid, bool *fw_packet) {
-    if (!m_execute_once_on_world_enter && netid != m_client->get_ctx()->PlayerInfo.NetID) {
+    if (!m_execute_once_on_world_enter && netid != m_proxy_server->get_ctx()->PlayerInfo.NetID) {
         return;
     }
 

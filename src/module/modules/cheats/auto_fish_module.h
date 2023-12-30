@@ -1,14 +1,14 @@
 #pragma once
 
-#include "module_base.h"
+#include "../module_base.h"
 
 #include <optional>
 
 #include "proton/Variant.h"
-#include <enet/enet.h>
+#include "enet/include/enet/enet.h"
 
-#include "../../network/packet.h"
-#include "../../utils/text_parse.h"
+#include "../../../network/packet.h"
+#include "../../../utils/text_parse.h"
 
 namespace modules {
 

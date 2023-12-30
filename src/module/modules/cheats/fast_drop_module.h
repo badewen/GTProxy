@@ -1,9 +1,9 @@
 #pragma once
 
-#include "module_base.h"
+#include "../module_base.h"
 
 #include "proton/Variant.h"
-#include <enet/enet.h>
+#include "enet/include/enet/enet.h"
 
 namespace modules {
 

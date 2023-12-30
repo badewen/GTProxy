@@ -2,8 +2,8 @@
 
 #include <chrono>
 
-#include "../../client/client.h"
-#include "../../dialog/dialog_response_builder.h"
+#include "../../../client/client.h"
+#include "../../../dialog/dialog_response_builder.h"
 
 using namespace modules;
 
@@ -24,9 +24,9 @@ void FastDropModule::drop_dialog_blocker(VariantList* varlist, int32_t net_id, b
 }
 
 void FastDropModule::on_enable() {
-    this->m_client->get_ctx()->OnIncomingVarlist.Register("FastDrop_Module", &FastDropModule::drop_dialog_blocker, this);
+    this->m_proxy_server->get_ctx()->OnIncomingVarlist.Register("FastDrop_Module", &FastDropModule::drop_dialog_blocker, this);
 }
 
 void FastDropModule::on_disable() {
-    this->m_client->get_ctx()->OnIncomingVarlist.Remove("FastDrop_Module");
+    this->m_proxy_server->get_ctx()->OnIncomingVarlist.Remove("FastDrop_Module");
 }

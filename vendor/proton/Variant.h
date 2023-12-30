@@ -15,7 +15,153 @@
 #include <functional>
 #include <vector>
 
-#include "common.h"
+typedef struct _CL_Vec2f {
+    float x;
+    float y;
+
+    _CL_Vec2f() {
+        x = 0.0f;
+        y = 0.0f;
+    }
+
+    explicit _CL_Vec2f(float f) {
+        x = f;
+        y = f;
+    }
+
+    _CL_Vec2f(float x, float y) {
+        this->x = x;
+        this->y = y;
+    }
+
+    bool operator==(const _CL_Vec2f& other) const {
+        return x == other.x && y == other.y;
+    }
+
+    bool operator!=(const _CL_Vec2f& other) const {
+        return x != other.x || y != other.y;
+    }
+
+    _CL_Vec2f operator+(const _CL_Vec2f& other) const {
+        return { x + other.x, y + other.y };
+    }
+
+    _CL_Vec2f operator-(const _CL_Vec2f& other) const {
+        return { x - other.x, y - other.y };
+    }
+
+    _CL_Vec2f operator*(const float& other) const {
+        return { x * other, y * other };
+    }
+
+    _CL_Vec2f operator/(const float& other) const {
+        return { x / other, y / other };
+    }
+
+    [[nodiscard]] std::pair<float, float> get_pair() const {
+        return { x, y };
+    }
+} CL_Vec2f;
+
+typedef struct _CL_Vec3f {
+    float x;
+    float y;
+    float z;
+
+    _CL_Vec3f() {
+        x = 0.0f;
+        y = 0.0f;
+        z = 0.0f;
+    }
+
+    explicit _CL_Vec3f(float f) {
+        x = f;
+        y = f;
+        z = f;
+    }
+
+    _CL_Vec3f(float x, float y, float z) {
+        this->x = x;
+        this->y = y;
+        this->z = z;
+    }
+
+    bool operator==(const _CL_Vec3f& other) const {
+        return x == other.x && y == other.y && z == other.z;
+    }
+
+    bool operator!=(const _CL_Vec3f& other) const {
+        return x != other.x || y != other.y || z != other.z;
+    }
+
+    _CL_Vec3f operator+(const _CL_Vec3f& other) const {
+        return { x + other.x, y + other.y, z + other.z };
+    }
+
+    _CL_Vec3f operator-(const _CL_Vec3f& other) const {
+        return { x - other.x, y - other.y, z - other.z };
+    }
+
+    _CL_Vec3f operator*(const float& other) const {
+        return { x * other, y * other, z * other };
+    }
+
+    _CL_Vec3f operator/(const float& other) const {
+        return { x / other, y / other, z / other };
+    }
+} CL_Vec3f;
+
+typedef struct CL_Rectf {
+    float x;
+    float y;
+    float width;
+    float height;
+
+    CL_Rectf() {
+        x = 0.0f;
+        y = 0.0f;
+        width = 0.0f;
+        height = 0.0f;
+    }
+
+    explicit CL_Rectf(float f) {
+        x = f;
+        y = f;
+        width = f;
+        height = f;
+    }
+
+    CL_Rectf(float x, float y, float width, float height) {
+        this->x = x;
+        this->y = y;
+        this->width = width;
+        this->height = height;
+    }
+
+    bool operator==(const CL_Rectf& other) const {
+        return x == other.x && y == other.y && width == other.width && height == other.height;
+    }
+
+    bool operator!=(const CL_Rectf& other) const {
+        return x != other.x || y != other.y || width != other.width || height != other.height;
+    }
+
+    CL_Rectf operator+(const CL_Rectf& other) const {
+        return { x + other.x, y + other.y, width + other.width, height + other.height };
+    }
+
+    CL_Rectf operator-(const CL_Rectf& other) const {
+        return { x - other.x, y - other.y, width - other.width, height - other.height };
+    }
+
+    CL_Rectf operator*(const float& other) const {
+        return { x * other, y * other, width * other, height * other };
+    }
+
+    CL_Rectf operator/(const float& other) const {
+        return { x / other, y / other, width / other, height / other };
+    }
+} CL_Rectf;
 
 enum eVariantType {
     TYPE_UNUSED,
@@ -28,18 +174,6 @@ enum eVariantType {
     TYPE_COMPONENT,
     TYPE_RECT,
     TYPE_INT32
-};
-
-enum eInterpolateType {
-    INTERPOLATE_LINEAR = 0,
-    INTERPOLATE_SMOOTHSTEP,
-    INTERPOLATE_EASE_TO,
-    INTERPOLATE_EASE_FROM,
-    INTERPOLATE_EASE_TO_QUARTIC,
-    INTERPOLATE_EASE_FROM_QUARTIC,
-    INTERPOLATE_BOUNCE_TO,
-    INTERPOLATE_SMOOTHSTEP_AS_COLOR,
-    INTERPOLATE_LINEAR_AS_COLOR
 };
 
 #define C_VAR_SPACE_BYTES 16 // Enough to fit a rect
@@ -77,8 +211,6 @@ public:
             m_pSig_onChanged = nullptr;
         }
     }
-
-    std::function<void (Variant*)> *GetSigOnChanged();
 
     void Set(const Variant &v);
     void SetVariant(Variant *pVar) /* Needed this because boost was confused... */;
@@ -376,12 +508,6 @@ public:
      * \see operator==() for a thorough explanation.
      */
     bool operator!=(const Variant &rhs) const;
-
-    void Interpolate(Variant *pA, Variant *pB, float curPos, eInterpolateType type);
-
-    bool Save(FILE *fp, const std::string &varName); // Assumes you've already fopen'ed something and pass the file pointer in
-
-    void ClearConnections(); // Clear any boost connections that were connections to its onchanged signal.
 
 private:
     void SetDefaults() {

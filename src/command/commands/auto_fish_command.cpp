@@ -1,7 +1,7 @@
 #include "auto_fish_command.h"
 
 #include "../../client/client.h"
-#include "../../module/modules/auto_fish_module.h"
+#include "../../module/modules/cheats/auto_fish_module.h"
 
 using namespace commands;
 

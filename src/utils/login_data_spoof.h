@@ -6,15 +6,15 @@
 #include <spdlog/fmt/bin_to_hex.h>
 
 namespace utils {
-class LoginSpoofData {
+class LoginData {
 public:
-    static LoginSpoofData Generate() {
-        LoginSpoofData ret{};
+    static LoginData Generate() {
+        LoginData ret{};
         ret.Regenerate();
         return ret;
     }
 
-    LoginSpoofData() = default;
+    LoginData() = default;
 
     void Regenerate() {
         randutils::pcg_rng gen{ utils::random::get_generator_local() };

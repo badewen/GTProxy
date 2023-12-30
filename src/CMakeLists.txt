@@ -9,6 +9,7 @@ message(STATUS "GTProxy version: ${GTPROXY_VERSION}")
 file(GLOB GTPROXY_INCLUDE_FILES
     *.h
     **/*.h
+    **/**/**/*.h
     **/*.hpp
     **/**/*.hpp
     ../vendor/proton/**/*.h
@@ -18,6 +19,8 @@ file(GLOB GTPROXY_SOURCE_FILES
     *.cpp
     **/*.cpp
     **/**/*.cpp
+    **/**/**/*.cpp
+
     ../vendor/proton/**/**/*.cpp)
 
 add_executable(${PROJECT_NAME}

@@ -1,15 +1,15 @@
 #include "module_manager.h"
 
-#include "modules/fast_drop_module.h"
-#include "modules/fast_vend_module.h"
-#include "modules/auto_fish_module.h"
-#include "modules/world_handler_module.h"
-#include "modules/white_skin_fix_module.h"
+#include "modules/cheats/fast_drop_module.h"
+#include "modules/cheats/fast_vend_module.h"
+#include "modules/cheats/auto_fish_module.h"
+#include "modules/necessary/world_handler_module.h"
+#include "modules/necessary/white_skin_fix_module.h"
 
 using namespace module;
 
 ModuleManager::ModuleManager() {
-    m_client = nullptr;
+    m_proxy_server = nullptr;
     m_modules.push_back(std::move(std::make_shared<modules::FastDropModule>(nullptr)));
     m_modules.push_back(std::move(std::make_shared<modules::FastVendModule>(nullptr)));
     m_modules.push_back(std::move(std::make_shared<modules::AutoFishModule>(nullptr)));
@@ -25,11 +25,11 @@ std::shared_ptr<module::ModuleBase> ModuleManager::get_module_by_name(const std:
     return nullptr;
 }
 
-void ModuleManager::update_curr_client(client::Client *client) {
+void ModuleManager::set_proxy_server_ptr(server::Server *proxy_server) {
     for (auto& mod : m_modules) {
-        mod->update_curr_client(client);
+        mod->update_curr_server(proxy_server);
     }
-    m_client = client;
+    m_proxy_server = proxy_server;
 }
 
 bool ModuleManager::enable_module(const std::string &module_name) {

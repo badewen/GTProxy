@@ -1,6 +1,6 @@
 #include "auto_fish_module.h"
 
-#include "../../client/client.h"
+#include "../../../client/client.h"
 
 using namespace modules;
 

@@ -1,7 +1,7 @@
 #include "fast_drop_command.h"
 
 #include "../../client/client.h"
-#include "../../module/modules/fast_drop_module.h"
+#include "../../module/modules/cheats/fast_drop_module.h"
 
 using namespace commands;
 

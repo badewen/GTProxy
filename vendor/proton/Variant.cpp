@@ -12,14 +12,6 @@ Variant::~Variant() {
     }
 }
 
-std::function<void (Variant *)> *Variant::GetSigOnChanged() {
-    if (!m_pSig_onChanged) {
-        m_pSig_onChanged = new std::function<void (Variant*)>;
-    }
-
-    return m_pSig_onChanged;
-}
-
 void Variant::Set(const Variant &v) {
     // Update our data from another variant object
     switch (v.GetType()) {
@@ -260,108 +252,6 @@ uint32_t ColorCombineMix(uint32_t c1, uint32_t c2, float progress) {
 
     // LogMsg(PrintColor(MAKE_RGBA(r, g, b, a)).c_str());
     return MAKE_RGBA(r, g, b, a);
-}
-
-#define SMOOTHSTEP(x) ((x) * (x) * (3 - 2 * (x))) // Thanks to sol_hsa at
-#define EASE_TO(x) (1 - (1 - (x)) * (1 - (x)))
-#define EASE_FROM(x) ((x)*(x))
-
-// curPos is between 0 (value of A) and 1 (value of B)
-void Variant::Interpolate(Variant *pA, Variant *pB, float curPos, eInterpolateType type) {
-	assert(GetType() == pA->GetType() && GetType() == pB->GetType() && "these should all be of the same type");
-	bool bAsColor = false;
-	switch (type) {
-        case INTERPOLATE_LINEAR_AS_COLOR:
-            bAsColor = true;
-            break; // As is
-        case INTERPOLATE_SMOOTHSTEP:
-            curPos = SMOOTHSTEP(curPos);
-            break;
-        case INTERPOLATE_SMOOTHSTEP_AS_COLOR:
-            curPos = SMOOTHSTEP(curPos);
-            bAsColor = true;
-            break;
-        case INTERPOLATE_EASE_TO:
-            curPos = EASE_TO(curPos);
-            break;
-        case INTERPOLATE_EASE_FROM:
-            curPos = EASE_FROM(curPos);
-            break;
-        case INTERPOLATE_EASE_TO_QUARTIC:
-            curPos = EASE_TO(curPos);
-            curPos = EASE_TO(curPos);
-            curPos = EASE_TO(curPos);
-            break;
-        case INTERPOLATE_EASE_FROM_QUARTIC:
-            curPos = curPos * curPos * curPos * curPos;
-            break;
-        case INTERPOLATE_BOUNCE_TO:
-            if (curPos < 0.36363636f) {
-                curPos = 7.5625f * curPos * curPos;
-            }
-            else if (curPos < 0.72727273f) {
-                curPos -= 0.54545455f;
-                curPos = 7.5625f * curPos * curPos + 0.75f;
-            }
-            else if (curPos < 0.90909091f) {
-                curPos -= 0.81818182f;
-                curPos = 7.5625f * curPos * curPos + 0.9375f;
-            }
-            else {
-                curPos -= 0.95454545f;
-                curPos = 7.5625f * curPos * curPos + 0.984375f;
-            }
-            break;
-        case INTERPOLATE_LINEAR:
-            break; // As is
-        default:
-            // LogError("Unknown interpolation type");
-            assert(0);
-    }
-
-    switch (pA->GetType()) {
-        case eVariantType::TYPE_FLOAT: {
-            Set(pA->GetFloat() + ((pB->GetFloat() - pA->GetFloat()) * curPos));
-        }
-        break;
-        case eVariantType::TYPE_VECTOR2: {
-            Set(pA->GetVector2() + ((pB->GetVector2() - pA->GetVector2()) * curPos));
-        }
-        break;
-        case eVariantType::TYPE_UINT32: {
-            if (bAsColor) {
-#ifdef _CONSOLE
-                assert(!"Not supported in console builds");
-                pA->Set(pB->GetUINT32());
-#else
-                Set(ColorCombineMix(pA->GetUINT32(), pB->GetUINT32(), curPos));
-#endif
-            }
-            else {
-                Set(uint32_t(float(pA->GetUINT32()) + ((float(pB->GetUINT32()) - float(pA->GetUINT32())) * curPos)));
-            }
-        }
-        break;
-        case eVariantType::TYPE_INT32: {
-            Set(int32_t(float(pA->GetINT32()) + ((float(pB->GetINT32()) - float(pA->GetINT32())) * curPos)));
-        }
-        break;
-        default:
-            // LogError("Interpolate: Don't handle this combination yet");
-            assert(0);
-	}
-}
-
-bool Variant::Save(FILE *fp, const std::string &varName) {
-    // Unused
-    return false;
-}
-
-void Variant::ClearConnections() {
-    if (m_pSig_onChanged) {
-        delete m_pSig_onChanged;
-        m_pSig_onChanged = nullptr;
-    }
 }
 
 int GetSizeOfData(eVariantType type) {

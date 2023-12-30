@@ -7,6 +7,7 @@
 #include "../peer/peer.h"
 #include "../client/client.h"
 #include "../utils/event_manager.h"
+#include "../module/module_manager.h"
 
 namespace server {
 // this class interface directly with the growtopia client and handles outgoing packets.
@@ -66,6 +67,8 @@ private:
 
     Config m_config;
     ENetHost* m_enet_host {};
+
+    module::ModuleManager m_module_manager {};
 
     utils::EventManager<std::shared_ptr<peer::Peer>> m_on_connect_callbacks;
     utils::EventManager<std::shared_ptr<peer::Peer>> m_on_disconnect_callbacks;

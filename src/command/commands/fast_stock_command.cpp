@@ -1,7 +1,7 @@
 #include "fast_stock_command.h"
 
 #include "../../client/client.h"
-#include "../../module/modules/fast_vend_module.h"
+#include "../../module/modules/cheats/fast_vend_module.h"
 
 using namespace commands;
 

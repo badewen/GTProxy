@@ -5,7 +5,7 @@
 #include <vector>
 
 namespace client {
-class Client;
+class Server;
 }
 
 namespace module {
@@ -21,8 +21,8 @@ public:
     virtual void on_enable() {}
     virtual void on_disable() {}
 
-    void update_curr_client(client::Client* client) {
-        m_client = client;
+    void update_curr_server(server::Server* server) {
+        m_proxy_server = server;
     }
 
     void enable() {
@@ -41,7 +41,7 @@ public:
     bool Enabled {};
 
 protected:
-    client::Client* m_client {};
+    server::Server* m_proxy_server {};
 };
 
 }

@@ -86,6 +86,7 @@ private:
             bool* /* forward packet */> m_on_incoming_tank_packet;
 
     utils::EventManager<VariantList* /*packet*/,
+            int32_t, /* net_id */
             std::shared_ptr<peer::Peer> /* gt_server_peer */,
             bool* /* forward packet */> m_on_incoming_varlist;
 };

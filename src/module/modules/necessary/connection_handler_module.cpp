@@ -111,6 +111,23 @@ void ConnectionHandlerModule::on_receive_login_packet_hook(
 
         m_login_data = login_parse;
 
+        auto http_data = server::Http::ServerDataCache.find(m_current_gt_client_meta);
+
+        // first time connected to the proxy
+        if (http_data != server::Http::ServerDataCache.end()) {
+            m_gt_server_ip = http_data->second.get("server", 1);
+            m_gt_server_port = http_data->second.get("port", 1);
+            m_use_new_packet = http_data->second.get<bool>("type", 1);
+
+            server::Http::ServerDataCache.erase(m_current_gt_client_meta);
+        }
+
+        ENetAddress addr {};
+        enet_address_set_host_ip(&addr, m_gt_server_ip.c_str());
+        addr.port = std::stoi(m_gt_server_port);
+
+        m_proxy_server->get_client()->connect(addr, m_use_new_packet);
+
         *fw_packet = false;
     }
 }
@@ -123,6 +140,9 @@ void ConnectionHandlerModule::on_receive_redirect_packet_hook(
 ) {
     if (varlist->Get(0).GetString() == "OnSendToServer") {
         std::vector<std::string> tokenized_data = utils::TextParse::string_tokenize(varlist->Get(4).GetString());
+
+        m_gt_server_ip = tokenized_data.at(0);
+        m_gt_server_port = varlist->Get(1).GetString();
 
         varlist->Get(1).Set(m_proxy_server->get_config->HostConfig.port)
         varlist->Get(4).Set(

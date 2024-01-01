@@ -40,24 +40,34 @@ public:
 
     void print_packet_info_incoming(ENetPacket* packet);
 
-    template<typename FuncType>
-    inline void add_on_connect_callback(std::string id, FuncType func) { m_on_connect_callbacks.Register(id, func); }
+    template<typename FuncType, typename ... FuncParams>
+    inline void add_on_connect_callback(std::string id, FuncType func, FuncParams ... func_data) {
+        m_on_connect_callbacks.Register(id, func, std::forward<FuncParams>(func_data)...);
+    }
     inline void remove_on_connect_callback(const std::string& id) { m_on_connect_callbacks.Remove(id); }
 
-    template<typename FuncType>
-    inline void add_on_disconnect_callback(std::string id, FuncType func) { m_on_disconnect_callbacks.Register(id, func); }
+    template<typename FuncType, typename ... FuncParams>
+    inline void add_on_disconnect_callback(std::string id, FuncType func, FuncParams... func_data) {
+        m_on_disconnect_callbacks.Register(id, func, std::forward<FuncParams>(func_data)...);
+    }
     inline void remove_on_disconnect_callback(const std::string& id) { m_on_disconnect_callbacks.Remove(id); }
 
-    template<typename FuncType>
-    inline void add_on_incoming_packet_callback(std::string id, FuncType func) { m_on_incoming_packet.Register(id, func); }
+    template<typename FuncType, typename ... FuncParams>
+    inline void add_on_incoming_packet_callback(std::string id, FuncType func, FuncParams... func_data) {
+        m_on_incoming_packet.Register(id, func, std::forward<FuncParams>(func_data)...);
+    }
     inline void remove_on_incoming_packet_callback(const std::string& id) { m_on_incoming_packet.Remove(id); }
 
-    template<typename FuncType>
-    inline void add_on_incoming_tank_packet_callback(std::string id, FuncType func) { m_on_incoming_tank_packet.Register(id, func); }
+    template<typename FuncType, typename ... FuncParams>
+    inline void add_on_incoming_tank_packet_callback(std::string id, FuncType func, FuncParams... func_data) {
+        m_on_incoming_tank_packet.Register(id, func, std::forward<FuncParams>(func_data)...);
+    }
     inline void remove_on_incoming_tank_packet_callback(const std::string& id) { m_on_incoming_tank_packet.Remove(id); }
 
-    template<typename FuncType>
-    inline void add_on_incoming_varlist_packet_callback(std::string id, FuncType func) { m_on_incoming_tank_packet.Register(id, func); }
+    template<typename FuncType, typename ... FuncParams>
+    inline void add_on_incoming_varlist_packet_callback(std::string id, FuncType func, FuncParams... func_data) {
+        m_on_incoming_varlist_packet.Register(id, func, std::forward<FuncParams>(func_data)...);
+    }
     inline void remove_on_incoming_varlist_packet_callback(const std::string& id) { m_on_incoming_tank_packet.Remove(id); }
 
 private:
@@ -100,6 +110,6 @@ private:
     utils::EventManager<VariantList* /*packet*/,
             int32_t, /* net_id */
             std::shared_ptr<peer::Peer> /* gt_server_peer */,
-            bool* /* forward packet */> m_on_incoming_varlist;
+            bool* /* forward packet */> m_on_incoming_varlist_packet;
 };
 }

@@ -169,6 +169,10 @@ extern ENetPacket* create_raw_packet(
         enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE
 );
 
-extern ENetPacket* create_varlist_packet(VariantList variant_list, std::int32_t net_id, enet_uint32 flags);
+extern ENetPacket* create_varlist_packet(
+        VariantList variant_list,
+        std::int32_t net_id,
+        enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE
+);
 
 }

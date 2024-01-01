@@ -7,7 +7,7 @@
 
 using namespace Resolver;
 
-Result Resolver::ResolveHostname(std::string hostname) {
+Result Resolver::ResolveDomain(std::string hostname) {
     static httplib::Client cli {"https://dns.google"};
 
     httplib::Result res = cli.Get(fmt::format("/resolve?name={}&type=A", hostname));

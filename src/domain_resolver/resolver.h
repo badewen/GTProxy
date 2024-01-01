@@ -22,6 +22,6 @@ struct Result {
     Status Statuz;
 };
 
-Result ResolveHostname(std::string hostname);
+Result ResolveDomain(std::string hostname);
 
 }

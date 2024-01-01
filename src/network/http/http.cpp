@@ -6,7 +6,7 @@
 #include "http.h"
 #include "ssl.h"
 #include "../../utils/text_parse.h"
-#include "../../utils/ip.h"
+#include "../../utils/hostname_classify.h"
 #include "../../ipresolver/resolver.h"
 
 namespace server {
@@ -181,7 +181,7 @@ std::string Http::get_server_data()
 
     std::string resolved_ip = Config::get_server().m_host;
 
-    if (utils::IsIpOrHostname(Config::get_server().m_host) == utils::HostType::Hostname) {
+    if (utils::ClassifyHostname(Config::get_server().m_host) == utils::HostType::Hostname) {
         auto res = Resolver::ResolveHostname(Config::get_server().m_host);
 
         if (res.Statuz != Resolver::NoError) {

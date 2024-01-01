@@ -38,7 +38,7 @@ bool IsValidIp(std::string addr) {
 
 // this only guarantee that the ip address is valid.
 // this doesn't verify hostname.
-HostType IsIpOrHostname(std::string addr) {
+HostType ClassifyHostname(std::string addr) {
     if (IsValidIp(addr))
         return HostType::IpAddr;
     else

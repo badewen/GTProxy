@@ -5,7 +5,7 @@
 #include "../world/world_info.h"
 #include "../packet/packet.h"
 
-class Player {
+class NetAvatar {
 public:
 public:
     std::string PlayerName;

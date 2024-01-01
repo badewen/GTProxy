@@ -20,10 +20,15 @@ bool Client::start() {
 
     m_running = true;
 
+    m_thread_pool->push_task(&client::Client::client_thread, this);
+    m_thread_pool->push_task(&client::Client::process_delayed_packet_thread, this);
+
     return true;
 }
 
-bool Client::connect(ENetAddress addr) {
+bool Client::connect(ENetAddress addr, bool use_new_packet) {
+    m_enet_host->usingNewPacket = use_new_packet;
+
     return enet_host_connect(m_enet_host, &addr, 1, NULL, m_proxy_server->get_gt_peer()->get_connect_id());
 }
 
@@ -48,8 +53,6 @@ void Client::stop() {
 void Client::on_connect(ENetPeer *peer) {
     m_gt_server_peer = std::make_shared<peer::Peer>(peer);
 
-    m_thread_pool->push_task(&client::Client::client_thread, this);
-
     m_on_connect_callbacks.Invoke(m_gt_server_peer);
 }
 
@@ -66,7 +69,7 @@ void Client::on_receive(ENetPeer *peer, ENetPacket *packet) {
 
                 varlist.SerializeFromMem(ext_data.data(), ext_data.size());
 
-                m_on_incoming_varlist.Invoke(&varlist, m_gt_server_peer, &forward_packet);
+                m_on_incoming_varlist.Invoke(&varlist, packet::get_tank_packet(packet)->net_id, m_gt_server_peer, &forward_packet);
             }
 
             m_on_incoming_tank_packet.Invoke(packet::get_tank_packet(packet), m_gt_server_peer, &forward_packet);
@@ -105,7 +108,6 @@ void Client::client_thread() {
                     break;
                 }
             }
-            enet_packet_destroy(event.packet);
         }
     }
 }
@@ -133,6 +135,14 @@ void Client::send_to_gt_server(ENetPacket *packet, bool invoke_event) {
     }
 }
 
+void Client::send_to_gt_server_delayed(ENetPacket *packet, float delay_ms, bool invoke_event) {
+    m_delayed_packet_secondary_queue.enqueue({
+        .Delay = delay_ms,
+        .Packet = packet,
+        .InvokeEvents = invoke_event
+    });
+}
+
 void Client::incoming_packet_events_invoke(ENetPacket *packet, bool *forward_packet) {
     packet::ePacketType packet_type = packet::get_packet_type(packet);
 
@@ -144,7 +154,7 @@ void Client::incoming_packet_events_invoke(ENetPacket *packet, bool *forward_pac
                 VariantList varlist {};
                 varlist.SerializeFromMem(packet::get_extended_data(tank_pkt).data(), tank_pkt->extended_data_length);
 
-                m_on_incoming_varlist.Invoke(&varlist, m_gt_server_peer, forward_packet);
+                m_on_incoming_varlist.Invoke(&varlist, tank_pkt->net_id, m_gt_server_peer, forward_packet);
             }
 
             m_on_incoming_tank_packet.Invoke(packet::get_tank_packet(packet), m_gt_server_peer, forward_packet);
@@ -175,16 +185,32 @@ void Client::print_packet_info_incoming(ENetPacket *packet) {
 
             spdlog::info("Incoming {}[{}] TankPacket with netid {}",
                          magic_enum::enum_name(tank_pkt->type),
-                         tank_pkt->type,
+                         static_cast<int32_t>(tank_pkt->type),
                          tank_pkt->net_id
             );
         }
         default: {
             spdlog::info("Incoming {}[{}] packet \n{}",
                          magic_enum::enum_name(packet_type),
-                         packet_type,
+                         static_cast<int32_t>(packet_type),
                          packet::get_text(packet)
             );
         }
+    }
+}
+
+void Client::process_delayed_packet_thread() {
+    while (m_running) {
+        std::array<packetInfoStruct, 16> packets;
+        while (m_delayed_packet_primary_queue.try_dequeue_bulk(packets.begin(), packets.size())) {
+            for (auto pkt : packets) {
+                if (!pkt.Delay.IsDone()) {
+                    m_delayed_packet_secondary_queue.enqueue(pkt);
+                }
+
+                send_to_gt_server(pkt.Packet, pkt.InvokeEvents);
+            }
+        }
+        std::swap(m_delayed_packet_primary_queue, m_delayed_packet_secondary_queue);
     }
 }

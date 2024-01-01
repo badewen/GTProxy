@@ -1,11 +1,13 @@
 #pragma once
 
 #include <threadpool/include/BS_thread_pool.hpp>
+#include <concurrentqueue/concurrentqueue.h>
 
 #include "../http/http.h"
 #include "../config.h"
 #include "../peer/peer.h"
 #include "../utils/event_manager.h"
+#include "../utils/timer.h"
 #include "proton/Variant.h"
 
 namespace server {
@@ -21,7 +23,7 @@ public:
 
     bool init(server::Server* proxy_server, std::shared_ptr<BS::thread_pool> thread_pool);
     bool start();
-    bool connect(ENetAddress addr);
+    bool connect(ENetAddress addr, bool use_new_packet);
     void stop();
 
     void on_connect(ENetPeer* peer);
@@ -34,6 +36,7 @@ public:
     void incoming_packet_events_invoke(ENetPacket* packet, bool* forward_packet);
 
     void send_to_gt_server(ENetPacket* packet, bool invoke_event = true);
+    void send_to_gt_server_delayed(ENetPacket* packet, float delay_ms, bool invoke_event = true);
 
     void print_packet_info_incoming(ENetPacket* packet);
 
@@ -58,21 +61,30 @@ public:
     inline void remove_on_incoming_varlist_packet_callback(const std::string& id) { m_on_incoming_tank_packet.Remove(id); }
 
 private:
+    struct packetInfoStruct {
+        utils::Timer Delay;
+        ENetPacket* Packet;
+        bool InvokeEvents;
+    };
+
+private:
     void client_thread();
+    void process_delayed_packet_thread();
+
     void create_host();
 
 private:
+    bool m_running {};
+
     std::shared_ptr<BS::thread_pool> m_thread_pool;
     // refers to the client that is interfacing directly with the growtopia server.
     server::Server* m_proxy_server{};
     // gt client refers to the actual gt client that is connected to the server
     std::shared_ptr<peer::Peer> m_gt_server_peer;
-
-    bool m_running {};
-
-    Config m_config;
     ENetHost* m_enet_host {};
 
+    moodycamel::ConcurrentQueue<packetInfoStruct> m_delayed_packet_primary_queue;
+    moodycamel::ConcurrentQueue<packetInfoStruct> m_delayed_packet_secondary_queue;
 
     utils::EventManager<std::shared_ptr<peer::Peer /* gt_server_peer */>> m_on_connect_callbacks;
     utils::EventManager<std::shared_ptr<peer::Peer /* gt_server_peer */>> m_on_disconnect_callbacks;

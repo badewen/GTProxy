@@ -26,6 +26,7 @@ bool Server::start() {
 
     m_thread_pool->push_task(&client::Client::start, m_client.get());
     m_thread_pool->push_task(&server::Server::server_thread, this);
+    m_thread_pool->push_task(&server::Server::process_delayed_packet_thread, this);
 
     return true;
 }
@@ -119,7 +120,6 @@ void Server::create_host() {
 }
 
 void Server::send_to_gt_client(ENetPacket *packet, bool invoke_event) {
-
     bool forward_packet = true;
 
     if (invoke_event) {
@@ -131,6 +131,14 @@ void Server::send_to_gt_client(ENetPacket *packet, bool invoke_event) {
         m_client->print_packet_info_incoming(packet);
         m_gt_peer->send_enet_packet(packet);
     }
+}
+
+void Server::send_to_gt_server_delayed(ENetPacket *packet, float delay_ms, bool invoke_event) {
+    m_delayed_packet_secondary_queue.enqueue({
+        .Delay = delay_ms,
+        .Packet = packet,
+        .InvokeEvents = invoke_event
+    });
 }
 
 void Server::outgoing_packet_events_invoke(ENetPacket *packet, bool *forward_packet) {
@@ -155,16 +163,32 @@ void Server::print_packet_info_outgoing(ENetPacket *packet) {
 
             spdlog::info("Outgoing {}[{}] TankPacket with netid {}",
                          magic_enum::enum_name(tank_pkt->type),
-                         tank_pkt->type,
+                         static_cast<int32_t>(tank_pkt->type),
                          tank_pkt->net_id
             );
         }
         default: {
             spdlog::info("Outgoing {}[{}] packet \n{}",
                          magic_enum::enum_name(packet_type),
-                         packet_type,
+                         static_cast<int32_t>(packet_type),
                          packet::get_text(packet)
             );
         }
+    }
+}
+
+void Server::process_delayed_packet_thread() {
+    while (m_running) {
+        std::array<packetInfoStruct, 16> packets;
+        while (m_delayed_packet_primary_queue.try_dequeue_bulk(packets.begin(), packets.size())) {
+            for (auto pkt : packets) {
+                if (!pkt.Delay.IsDone()) {
+                    m_delayed_packet_secondary_queue.enqueue(pkt);
+                }
+
+                send_to_gt_client(pkt.Packet, pkt.InvokeEvents);
+            }
+        }
+        std::swap(m_delayed_packet_primary_queue, m_delayed_packet_secondary_queue);
     }
 }

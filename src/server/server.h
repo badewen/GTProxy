@@ -33,6 +33,7 @@ public:
     void outgoing_packet_events_invoke(ENetPacket* packet, bool* forward_packet);
 
     void send_to_gt_client(ENetPacket* packet, bool invoke_event = true);
+    void send_to_gt_server_delayed(ENetPacket* packet, float delay_ms, bool invoke_event = true);
 
     void print_packet_info_outgoing(ENetPacket* packet);
 
@@ -53,7 +54,16 @@ public:
     inline void remove_on_outgoing_tank_packet_callback(const std::string& id) { m_on_outgoing_tank_packet.Remove(id); }
 
 private:
+    struct packetInfoStruct {
+        utils::Timer Delay;
+        ENetPacket* Packet;
+        bool InvokeEvents;
+    };
+
+private:
     void server_thread();
+    void process_delayed_packet_thread();
+
     void create_host();
 
 private:
@@ -67,6 +77,9 @@ private:
 
     Config m_config;
     ENetHost* m_enet_host {};
+
+    moodycamel::ConcurrentQueue<packetInfoStruct> m_delayed_packet_primary_queue;
+    moodycamel::ConcurrentQueue<packetInfoStruct> m_delayed_packet_secondary_queue;
 
     module::ModuleManager m_module_manager {};
 

@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#include <enet/enet.h>
+#include "enet/include/enet/enet.h"
 #include <magic_enum.hpp>
 
 using namespace server;

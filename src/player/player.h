@@ -3,7 +3,7 @@
 #include "proton/Variant.h"
 
 #include "../world/world_info.h"
-#include "../network/packet.h"
+#include "../packet/packet.h"
 
 class Player {
 public:

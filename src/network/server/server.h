@@ -1,13 +1,13 @@
 #pragma once
 
-#include <threadpool/include/BS_thread_pool.hpp>
+#include "threadpool/include/BS_thread_pool.hpp"
 
 #include "../http/http.h"
-#include "../config.h"
-#include "../peer/peer.h"
+#include "../../config.h"
+#include "../../peer/peer.h"
 #include "../client/client.h"
-#include "../utils/event_manager.h"
-#include "../module/module_manager.h"
+#include "../../utils/event_manager.h"
+#include "../../module/module_manager.h"
 
 namespace server {
 // this class interface directly with the growtopia client and handles outgoing packets.

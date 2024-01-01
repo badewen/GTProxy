@@ -5,7 +5,7 @@
 #include <memory>
 #include "enet/enet.h"
 #include <spdlog/spdlog.h>
-#include <proton/Variant.h>
+#include "proton/Variant.h"
 
 namespace packet {
 enum ePacketType : std::uint32_t {
@@ -148,64 +148,27 @@ static_assert((sizeof(GameUpdatePacket) == 56) && "Invalid GameUpdatePacket size
 
 
 
-inline ePacketType get_packet_type(const ENetPacket* packet)
-{
-    if (packet->dataLength > 3) {
-        return static_cast<ePacketType>(*packet->data);
-    }
+extern ePacketType get_packet_type(const ENetPacket* packet);
 
-    spdlog::error("Bad packet length, ignoring message");
-    return ePacketType::NET_MESSAGE_UNKNOWN;
-}
+extern std::string get_text(const ENetPacket* packet);
 
-inline std::string get_text(const ENetPacket* packet)
-{
-    std::vector<char> temp (packet->data + 4, packet->data + packet->dataLength - 1);
+extern GameUpdatePacket* get_tank_packet(const ENetPacket* packet);
 
-    return { temp.begin(), temp.end() };
-}
+extern std::vector<uint8_t> get_extended_data(GameUpdatePacket* game_update_packet);
 
-inline GameUpdatePacket* get_tank_packet(const ENetPacket* packet)
-{
-    if (packet->dataLength < sizeof(GameUpdatePacket)) {
-        return nullptr;
-    }
+extern VariantList get_varlist(GameUpdatePacket* game_update_packet);
 
-    auto game_update_packet{ reinterpret_cast<GameUpdatePacket*>(packet->data + 4) };
-    if (!game_update_packet->flags.bExtended) {
-        return game_update_packet;
-    }
+extern ENetPacket* create_packet(packet::ePacketType type, const std::vector<uint8_t>& data);
+extern ENetPacket* create_packet(packet::ePacketType type, const std::string& data);
 
-    if (packet->dataLength < game_update_packet->extended_data_length + sizeof(GameUpdatePacket)) {
-        spdlog::error("Packet too small for extended packet to be valid");
-        return nullptr;
-    }
+extern ENetPacket* create_raw_packet(
+        packet::GameUpdatePacket *game_update_packet,
+        packet::ePacketType type = packet::ePacketType::NET_MESSAGE_GAME_PACKET,
+        std::size_t length = sizeof(packet::GameUpdatePacket),
+        std::uint8_t* extended_data = nullptr,
+        enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE
+);
 
-    return game_update_packet;
-}
-
-inline std::vector<uint8_t> get_extended_data(GameUpdatePacket* game_update_packet)
-{
-    if (!game_update_packet->flags.bExtended) {
-        return {};
-    }
-
-    return { (uint8_t*)(((uintptr_t)game_update_packet) + sizeof(GameUpdatePacket)),
-             (uint8_t*)(((uintptr_t)game_update_packet) + sizeof(GameUpdatePacket) + game_update_packet->extended_data_length - 1)
-    };
-}
-
-inline VariantList get_varlist(GameUpdatePacket* game_update_packet)
-{
-    if (game_update_packet->type != eTankPacketType::PACKET_CALL_FUNCTION) {
-        return {};
-    }
-
-    VariantList varlist{};
-
-    varlist.SerializeFromMem(get_extended_data(game_update_packet).data(), get_extended_data(game_update_packet).size());
-
-    return varlist;
-}
+extern ENetPacket* create_varlist_packet(VariantList variant_list, std::int32_t net_id, enet_uint32 flags);
 
 }

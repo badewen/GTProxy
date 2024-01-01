@@ -2,8 +2,8 @@
 #include <string>
 #include <httplib/httplib.h>
 
-#include "../config.h"
-#include "../utils/text_parse.h"
+#include "../../config.h"
+#include "../../utils/text_parse.h"
 
 namespace server {
 class Http {

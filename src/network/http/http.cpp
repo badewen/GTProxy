@@ -5,9 +5,9 @@
 
 #include "http.h"
 #include "ssl.h"
-#include "../utils/text_parse.h"
-#include "../utils/ip.h"
-#include "../ipresolver/resolver.h"
+#include "../../utils/text_parse.h"
+#include "../../utils/ip.h"
+#include "../../ipresolver/resolver.h"
 
 namespace server {
 std::unique_ptr<httplib::Server> Http::s_server {};

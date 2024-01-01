@@ -1,13 +1,13 @@
 #pragma once
 
-#include <threadpool/include/BS_thread_pool.hpp>
-#include <concurrentqueue/concurrentqueue.h>
+#include "threadpool/include/BS_thread_pool.hpp"
+#include "concurrentqueue/concurrentqueue.h"
 
 #include "../http/http.h"
-#include "../config.h"
-#include "../peer/peer.h"
-#include "../utils/event_manager.h"
-#include "../utils/timer.h"
+#include "../../config.h"
+#include "../../peer/peer.h"
+#include "../../utils/event_manager.h"
+#include "../../utils/timer.h"
 #include "proton/Variant.h"
 
 namespace server {

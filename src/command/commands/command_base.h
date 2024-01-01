@@ -5,7 +5,7 @@
 #include <string>
 #include <algorithm>
 
-#include "../../network/packet.h"
+#include "../../packet/packet.h"
 #include "../../config.h"
 
 namespace client {

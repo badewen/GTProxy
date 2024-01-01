@@ -7,7 +7,7 @@
 
 #include <enet/enet.h>
 #include "../../../utils/login_data_spoof.h"
-#include "../../../network/packet.h"
+#include "../../../packet/packet.h"
 #include "../../../utils/text_parse.h"
 
 namespace server {

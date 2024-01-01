@@ -1,8 +1,7 @@
 #include "connection_handler_module.h"
 
-#include "../../../client/client.h"
-#include "../../../server/server.h"
-#include "../../../peer/peer.h"
+#include "../../../network/client/client.h"
+#include "../../../network/server/server.h"
 
 #include "../../../utils/klv.h"
 
@@ -153,5 +152,15 @@ void ConnectionHandlerModule::on_receive_redirect_packet_hook(
                         tokenized_data.at(2)
                 )
         );
+
+        m_proxy_server->send_to_gt_client(
+            packet::create_varlist_packet(
+                *varlist,
+                net_id
+            ),
+            false
+        );
+
+        *fw_packet = false;
     }
 }

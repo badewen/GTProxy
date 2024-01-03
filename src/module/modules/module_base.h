@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-namespace client {
+namespace server {
 class Server;
 }
 
@@ -12,7 +12,6 @@ namespace module {
 
 class ModuleBase {
 public:
-
     explicit ModuleBase(std::string module_name, std::vector<std::string> required_modules = {}) :
         Name {std::move( module_name )},
         RequiredModules {std::move(required_modules)}

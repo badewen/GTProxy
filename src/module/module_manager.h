@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <memory>
+#include <type_traits>
 
 #include "modules/module_base.h"
 
@@ -14,7 +15,13 @@ class ModuleManager {
 public:
     explicit ModuleManager();
 
-    std::shared_ptr<module::ModuleBase> get_module_by_name(const std::string& module_name);
+    std::shared_ptr<module::ModuleBase> get_module_by_name(const std::string& module_name);\
+
+    template<typename T>
+    std::shared_ptr<T> get_module_by_name(const std::string &module_name) {
+        return std::dynamic_pointer_cast<T>(get_module_by_name(module_name));
+    }
+
     // safe way to enable/disable module.
     bool enable_module(const std::string& module_name);
     // disable modules that has dependency on the module that is being disabled.

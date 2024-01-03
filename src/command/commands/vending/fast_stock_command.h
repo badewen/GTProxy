@@ -1,6 +1,6 @@
 #pragma once
 
-#include "command_base.h"
+#include "../command_base.h"
 
 namespace commands {
 class FastStockCommand : public command::CommandBase {

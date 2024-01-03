@@ -133,7 +133,7 @@ void Server::send_to_gt_client(ENetPacket *packet, bool invoke_event) {
     }
 }
 
-void Server::send_to_gt_server_delayed(ENetPacket *packet, float delay_ms, bool invoke_event) {
+void Server::send_to_gt_client_delayed(ENetPacket *packet, float delay_ms, bool invoke_event) {
     m_delayed_packet_secondary_queue.enqueue({
         .Delay = delay_ms,
         .Packet = packet,

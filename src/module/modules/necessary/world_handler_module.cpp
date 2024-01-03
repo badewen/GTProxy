@@ -1,11 +1,11 @@
 #include "world_handler_module.h"
 
-#include "../../../client/client.h"
+#include "../../../network/server/server.h"
 
 using namespace modules;
 
 void WorldHandlerModule::on_enable() {
-    m_proxy_server->get_ctx()->OnIncomingTankPacket.Register(
+    m_proxy_server->get_client()->add_on_incoming_tank_packet_callback(
             "WorldHandler_Module",
             &WorldHandlerModule::on_incoming_raw_packet_hook,
             this
@@ -13,14 +13,18 @@ void WorldHandlerModule::on_enable() {
 }
 
 void WorldHandlerModule::on_disable() {
-    m_proxy_server->get_ctx()->OnIncomingTankPacket.Remove("WorldHandler_Module");
+    m_proxy_server->get_client()->remove_on_incoming_tank_packet_callback("WorldHandler_Module");
 }
 
-void WorldHandlerModule::on_incoming_raw_packet_hook(packet::GameUpdatePacket *tank_packet, bool *fw_packet) {
+void WorldHandlerModule::on_incoming_raw_packet_hook(
+        packet::GameUpdatePacket *tank_packet,
+        std::shared_ptr<peer::Peer> gt_server_peer,
+        bool *fw_packet
+) {
     switch (tank_packet->type) {
         case packet::eTankPacketType::PACKET_SEND_MAP_DATA: {
-            uint8_t* ext_data = get_extended_data(tank_packet);
-            on_receive_world_data({ext_data, ext_data + tank_packet->data_size + 1});
+            std::vector<uint8_t> ext_data = packet::get_extended_data(tank_packet);
+            on_receive_world_data(ext_data);
             break;
         }
         default: {

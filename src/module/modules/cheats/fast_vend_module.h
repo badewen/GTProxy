@@ -2,11 +2,17 @@
 
 #include "../module_base.h"
 
+#include <memory>
+
 #include "proton/Variant.h"
 #include "enet/include/enet/enet.h"
 
 #include "../../../utils/text_parse.h"
 #include "../../../dialog/dialog_response_builder.h"
+
+namespace peer {
+class Peer;
+}
 
 namespace modules {
 
@@ -22,7 +28,7 @@ namespace modules {
 */
 class FastVendModule : public module::ModuleBase {
 public:
-    explicit FastVendModule(client::Client* client)
+    explicit FastVendModule(server::Server* proxy_server)
         : module::ModuleBase("FastVend_Module")
         , m_buy_amount { 0 }
     {}
@@ -38,7 +44,12 @@ public:
     void enable_fast_withdraw(bool enable) { m_enable_fast_withdraw = enable; }
 
 private:
-    void on_dialog_hook(VariantList* var_list, int32_t net_id, bool* forward_packet);
+    void on_dialog_hook(
+            VariantList* var_list,
+            int32_t net_id,
+            std::shared_ptr<peer::Peer> gt_server_peer,
+            bool* forward_packet
+    );
 
     void on_vending_buy_dialog(dialog::DialogResponseBuilder& dialog_response) const;
     void on_vending_confirm_buy(const dialog::DialogResponseBuilder& dialog_response) const;

@@ -8,6 +8,7 @@
 #include "../client/client.h"
 #include "../../utils/event_manager.h"
 #include "../../module/module_manager.h"
+#include "../../player/player.h"
 
 namespace server {
 // this class interface directly with the growtopia client and handles outgoing packets.
@@ -29,11 +30,12 @@ public:
     peer::Peer* get_gt_peer() { return m_gt_peer.get(); }
     client::Client* get_client() { return m_client.get(); }
     Config* get_config() { return &m_config; }
+    module::ModuleManager* get_module_manager() { return &m_module_manager; }
 
     void outgoing_packet_events_invoke(ENetPacket* packet, bool* forward_packet);
 
     void send_to_gt_client(ENetPacket* packet, bool invoke_event = true);
-    void send_to_gt_server_delayed(ENetPacket* packet, float delay_ms, bool invoke_event = true);
+    void send_to_gt_client_delayed(ENetPacket* packet, float delay_ms, bool invoke_event = true);
 
     void print_packet_info_outgoing(ENetPacket* packet);
 

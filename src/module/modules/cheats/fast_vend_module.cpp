@@ -1,18 +1,27 @@
 #include "fast_vend_module.h"
 
-#include "../../../client/client.h"
+#include "../../../network/server/server.h"
 
 using namespace modules;
 
 void FastVendModule::on_enable() {
-    m_client->get_ctx()->OnIncomingVarlist.Register("FastVend_Module", &FastVendModule::on_dialog_hook, this);
+    m_proxy_server->get_client()->add_on_incoming_varlist_packet_callback(
+            "FastVend_Module",
+            &FastVendModule::on_dialog_hook,
+            this
+    );
 }
 
 void FastVendModule::on_disable() {
-    m_client->get_ctx()->OnIncomingVarlist.Remove("FastVend_Module");
+    m_proxy_server->get_client()->remove_on_incoming_tank_packet_callback("FastVend_Module");
 }
 
-void FastVendModule::on_dialog_hook(VariantList* var_list, int32_t net_id, bool* forward_packet) {
+void FastVendModule::on_dialog_hook(
+        VariantList* var_list,
+        int32_t net_id,
+        std::shared_ptr<peer::Peer> gt_server_peer,
+        bool* forward_packet
+) {
     if (var_list->Get(0).GetString() != "OnDialogRequest") return;
 
     dialog::DialogResponseBuilder dialog_response {var_list->Get(1).GetString()};
@@ -50,8 +59,8 @@ void FastVendModule::on_dialog_hook(VariantList* var_list, int32_t net_id, bool*
 
     *forward_packet = false;
 
-    m_client->send_to_server_delayed(
-            player::Peer::build_packet(
+    m_proxy_server->get_client()->send_to_gt_server_delayed(
+            packet::create_packet(
                 packet::ePacketType::NET_MESSAGE_GENERIC_TEXT,
                 dialog_response.build()
             ),

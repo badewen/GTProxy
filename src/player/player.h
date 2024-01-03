@@ -10,6 +10,7 @@ public:
 public:
     std::string PlayerName;
     int32_t NetID;
+    uint32_t UserID;
 private:
 private:
 

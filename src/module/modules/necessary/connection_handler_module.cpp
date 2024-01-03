@@ -8,20 +8,54 @@
 using namespace modules;
 
 void ConnectionHandlerModule::on_enable() {
-    m_proxy_server->add_on_connect_callback("ConnectionHandler_Module", on_gt_client_connect, this);
-    m_proxy_server->add_on_disconnect_callback("ConnectionHandler_Module", on_gt_client_disconnect, this);
-
-    m_proxy_server->get_client()->add_on_connect_callback("ConnectionHandler_Module", on_proxy_client_connect, this);
-    m_proxy_server->get_client()->add_on_disconnect_callback("ConnectionHandler_Module", on_proxy_client_disconnect, this);
-
-    m_proxy_server->get_client()->add_on_incoming_packet_callback("ConnectionHandler_Module", on_receive_hello_packet_hook, this);
-    m_proxy_server->get_client()->add_on_incoming_varlist_packet_callback(
+    m_proxy_server->add_on_connect_callback(
             "ConnectionHandler_Module",
-            on_receive_redirect_packet_hook,
+            &ConnectionHandlerModule::on_gt_client_connect,
+            this
+    );
+    m_proxy_server->add_on_disconnect_callback(
+            "ConnectionHandler_Module",
+            &ConnectionHandlerModule::on_gt_client_disconnect,
             this
     );
 
-    m_proxy_server->add_on_outgoing_packet_callback("ConnectionHandler_Module", on_receive_login_packet_hook, this);
+    m_proxy_server->get_client()->add_on_connect_callback(
+            "ConnectionHandler_Module",
+            &ConnectionHandlerModule::on_proxy_client_connect,
+            this
+    );
+    m_proxy_server->get_client()->add_on_disconnect_callback(
+            "ConnectionHandler_Module",
+            &ConnectionHandlerModule::on_proxy_client_disconnect,
+            this
+    );
+
+    m_proxy_server->get_client()->add_on_incoming_packet_callback(
+            "ConnectionHandler_Module",
+            &ConnectionHandlerModule::on_receive_hello_packet_hook,
+            this
+    );
+    m_proxy_server->get_client()->add_on_incoming_varlist_packet_callback(
+            "ConnectionHandler_Module",
+            &ConnectionHandlerModule::on_receive_redirect_packet_hook,
+            this
+    );
+
+    m_proxy_server->add_on_outgoing_packet_callback(
+            "ConnectionHandler_Module",
+            &ConnectionHandlerModule::on_receive_login_packet_hook,
+            this
+    );
+}
+
+void ConnectionHandlerModule::on_disable() {
+    m_proxy_server->remove_on_connect_callback("ConnectionHandler_Module");
+    m_proxy_server->remove_on_disconnect_callback("ConnectionHandler_Module");
+    m_proxy_server->get_client()->remove_on_connect_callback("ConnectionHandler_Module");
+    m_proxy_server->get_client()->remove_on_disconnect_callback("ConnectionHandler_Module");
+    m_proxy_server->get_client()->remove_on_incoming_packet_callback("ConnectionHandler_Module");
+    m_proxy_server->get_client()->remove_on_incoming_varlist_packet_callback("ConnectionHandler_Module");
+    m_proxy_server->remove_on_outgoing_packet_callback("ConnectionHandler_Module");
 }
 
 void ConnectionHandlerModule::on_gt_client_connect(std::shared_ptr<peer::Peer> gt_peer) {
@@ -79,7 +113,7 @@ void ConnectionHandlerModule::on_receive_login_packet_hook(
     if (!login_parse.get("meta", 1).empty()) {
         m_login_data = login_parse;
 
-        if (m_proxy_server->get_config()->MiscConfig.spoof_login &&
+        if (m_proxy_server->get_config()->Misc.spoof_login &&
             login_parse.get("meta", 1) != m_current_gt_client_meta)
         {
             utils::LoginData generated_login_data = utils::LoginData::Generate();
@@ -100,12 +134,12 @@ void ConnectionHandlerModule::on_receive_login_packet_hook(
             m_current_gt_client_meta = login_parse.get("meta", 1);
         }
 
-        if (m_proxy_server->get_config()->MiscConfig.force_update_game_version) {
-            m_login_data.set("game_version", m_proxy_server->get_config()->ServerConfig.game_version);
+        if (m_proxy_server->get_config()->Misc.force_update_game_version) {
+            m_login_data.set("game_version", m_proxy_server->get_config()->Server.game_version);
         }
 
-        if (m_proxy_server->get_config()->MiscConfig.force_update_protocol) {
-            m_login_data.set("protocol", m_proxy_server->get_config()->ServerConfig.protocol);
+        if (m_proxy_server->get_config()->Misc.force_update_protocol) {
+            m_login_data.set("protocol", m_proxy_server->get_config()->Server.protocol);
         }
 
         m_login_data = login_parse;
@@ -143,7 +177,7 @@ void ConnectionHandlerModule::on_receive_redirect_packet_hook(
         m_gt_server_ip = tokenized_data.at(0);
         m_gt_server_port = varlist->Get(1).GetString();
 
-        varlist->Get(1).Set(m_proxy_server->get_config->HostConfig.port)
+        varlist->Get(1).Set(m_proxy_server->get_config()->Host.port);
         varlist->Get(4).Set(
                 fmt::format(
                         "{}|{}|{}",

@@ -50,7 +50,7 @@ private:
 private:
     std::string m_current_gt_client_meta;
     std::string m_gt_server_ip, m_gt_server_port;
-    bool m_use_new_packet;
+    bool m_use_new_packet {};
     utils::TextParse m_login_data;
 };
 }

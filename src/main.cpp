@@ -4,8 +4,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 #include "config.h"
-#include "enetwrapper/enet_wrapper.h"
-#include "server/server.h"
+#include "network/server/server.h"
 
 int main()
 {
@@ -54,7 +53,7 @@ int main()
         return 1;
     }
 
-    server::Http::Init();
+    server::Http::init();
     if (!server::Http::listen("0.0.0.0", 443)) {
         spdlog::error("Failed to bind http server. port : 443");
         return 1;
@@ -66,7 +65,8 @@ int main()
     }
 
     auto server{ std::make_unique<server::Server>() };
-    if (!server->start(conf)) {
+    server->init(conf);
+    if (!server->start()) {
         return 1;
     }
 

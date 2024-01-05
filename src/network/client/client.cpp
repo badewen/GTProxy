@@ -43,7 +43,7 @@ void Client::stop() {
 
     m_on_connect_callbacks.RemoveAll();
     m_on_disconnect_callbacks.RemoveAll();
-    m_on_incoming_varlist.RemoveAll();
+    m_on_incoming_varlist_packet.RemoveAll();
     m_on_incoming_packet.RemoveAll();
     m_on_incoming_tank_packet.RemoveAll();
 
@@ -69,7 +69,7 @@ void Client::on_receive(ENetPeer *peer, ENetPacket *packet) {
 
                 varlist.SerializeFromMem(ext_data.data(), ext_data.size());
 
-                m_on_incoming_varlist.Invoke(&varlist, packet::get_tank_packet(packet)->net_id, m_gt_server_peer, &forward_packet);
+                m_on_incoming_varlist_packet.Invoke(&varlist, packet::get_tank_packet(packet)->net_id, m_gt_server_peer, &forward_packet);
             }
 
             m_on_incoming_tank_packet.Invoke(packet::get_tank_packet(packet), m_gt_server_peer, &forward_packet);
@@ -154,7 +154,7 @@ void Client::incoming_packet_events_invoke(ENetPacket *packet, bool *forward_pac
                 VariantList varlist {};
                 varlist.SerializeFromMem(packet::get_extended_data(tank_pkt).data(), tank_pkt->extended_data_length);
 
-                m_on_incoming_varlist.Invoke(&varlist, tank_pkt->net_id, m_gt_server_peer, forward_packet);
+                m_on_incoming_varlist_packet.Invoke(&varlist, tank_pkt->net_id, m_gt_server_peer, forward_packet);
             }
 
             m_on_incoming_tank_packet.Invoke(packet::get_tank_packet(packet), m_gt_server_peer, forward_packet);

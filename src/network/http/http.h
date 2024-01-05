@@ -8,7 +8,7 @@
 namespace server {
 class Http {
 public:
-    static void Init();
+    static void init();
     static bool bind_to_port(const std::string& host, int port);
     static void listen_after_bind();
     static bool listen(const std::string& host, int port);
@@ -26,6 +26,7 @@ public:
     static std::unordered_map<std::string, utils::TextParse> ServerDataCache;
 
 private:
+    static Config* s_config;
     static std::unique_ptr<httplib::Server> s_server;
     static httplib::Headers s_last_headers;
     static httplib::Params s_last_params;

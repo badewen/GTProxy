@@ -7,7 +7,7 @@
 #include "ssl.h"
 #include "../../utils/text_parse.h"
 #include "../../utils/hostname_classify.h"
-#include "../../ipresolver/resolver.h"
+#include "../../domain_resolver/resolver.h"
 
 namespace server {
 std::unique_ptr<httplib::Server> Http::s_server {};
@@ -15,8 +15,9 @@ httplib::Headers Http::s_last_headers {};
 httplib::Params Http::s_last_params {};
 std::string Http::s_last_content {};
 std::unordered_map<std::string, utils::TextParse> Http::ServerDataCache {};
+Config* Http::s_config {};
 
-void Http::Init()
+void Http::init()
 {
     std::string cache_dir{ "./cache" };
     std::filesystem::create_directory(cache_dir);
@@ -81,7 +82,7 @@ void Http::listen_internal()
         res.set_content(
             fmt::format(
                 "Hello, world!\r\n{} ({})",
-                httplib::detail::status_message(res.status),
+                httplib::status_message(res.status),
                 res.status
             ),
             "text/plain"
@@ -138,8 +139,10 @@ void Http::listen_internal()
         spdlog::info("\t{}", text_parse.get_all_raw());
 
         text_parse.set("server", "127.0.0.1");
-        text_parse.set("port", Config::get_host().m_port);
+        text_parse.set("port", s_config->Host.port);
 
+        
+        
         res.set_content(text_parse.get_all_raw(), "text/html");
         return true;
     });
@@ -149,7 +152,7 @@ void Http::listen_internal()
 
 std::string Http::get_server_data()
 {
-    spdlog::debug("Requesting server data from: https://{}", Config::get_server().m_host);
+    spdlog::debug("Requesting server data from: https://{}", s_config->Server.host);
 
     auto validate_server_response{
         [](const httplib::Result& response)
@@ -179,15 +182,15 @@ std::string Http::get_server_data()
         }
     };
 
-    std::string resolved_ip = Config::get_server().m_host;
+    std::string resolved_ip = s_config->Server.host;
 
-    if (utils::ClassifyHostname(Config::get_server().m_host) == utils::HostType::Hostname) {
-        auto res = Resolver::ResolveHostname(Config::get_server().m_host);
+    if (utils::ClassifyHostname(s_config->Server.host) == utils::HostType::Hostname) {
+        auto res = Resolver::ResolveDomain(s_config->Server.host);
 
         if (res.Statuz != Resolver::NoError) {
             spdlog::error(
                 "Error occurred while resolving {} ip address. Dns server returned {}",
-                Config::get_server().m_host,
+                s_config->Server.host,
                 magic_enum::enum_name(res.Statuz));
             return {};
         }
@@ -196,7 +199,7 @@ std::string Http::get_server_data()
 
         spdlog::info(
             "{} ip address is {}",
-            Config::get_server().m_host,
+            s_config->Server.host,
             resolved_ip);
     }
 
@@ -205,7 +208,7 @@ std::string Http::get_server_data()
 
     httplib::Headers header {
         {"User-Agent", get_header_value(s_last_headers, "User-Agent")},
-        {"Host", Config::get_server().m_host}
+        {"Host", s_config->Server.host}
     };
 
     httplib::Result response{ cli.Post(
@@ -232,7 +235,7 @@ std::string Http::get_server_data()
         }
     }
 
-    spdlog::warn("Failed to retrieve server data from {}", Config::get_server().m_host);
+    spdlog::warn("Failed to retrieve server data from {}", s_config->Server.host);
     return {};
 }
 }

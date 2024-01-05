@@ -4,6 +4,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/sha.h>
+#include <fmt/format.h>
 
 namespace utils {
 namespace hash {

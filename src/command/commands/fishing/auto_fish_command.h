@@ -3,12 +3,12 @@
 //#include "../command_base.h"
 //
 //namespace commands {
-//class FastStockCommand : public command::CommandBase {
+//class AutoFishCommand : public command::CommandBase {
 //public:
-//    FastStockCommand() : command::CommandBase(
-//            {"faststock", "fs"},
+//    AutoFishCommand() : command::CommandBase(
+//            {"autofish", "af"},
 //            {"[enable_disable]"},
-//            "fast stock vending machine",
+//            "auto fish",
 //            0
 //    ) {}
 //

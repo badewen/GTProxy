@@ -82,7 +82,7 @@ void Http::listen_internal()
         res.set_content(
             fmt::format(
                 "Hello, world!\r\n{} ({})",
-                httplib::status_message(res.status),
+                httplib::detail::status_message(res.status),
                 res.status
             ),
             "text/plain"
@@ -141,8 +141,6 @@ void Http::listen_internal()
         text_parse.set("server", "127.0.0.1");
         text_parse.set("port", s_config->Host.port);
 
-        
-        
         res.set_content(text_parse.get_all_raw(), "text/html");
         return true;
     });

@@ -16,7 +16,7 @@ namespace server {
 // and forward then invoking the packet events callbacks
 class Server {
 public:
-    explicit Server() = default;
+    explicit Server();
     ~Server() = default;
 
     bool init(Config conf);
@@ -32,10 +32,12 @@ public:
     Config* get_config() { return &m_config; }
     module::ModuleManager* get_module_manager() { return &m_module_manager; }
 
+    bool is_running() { return m_running; }
+
     void outgoing_packet_events_invoke(ENetPacket* packet, bool* forward_packet);
 
-    void send_to_gt_client(ENetPacket* packet, bool invoke_event = true);
-    void send_to_gt_client_delayed(ENetPacket* packet, float delay_ms, bool invoke_event = true);
+    void send_to_gt_client(ENetPacket* packet, bool invoke_event);
+    void send_to_gt_client_delayed(ENetPacket* packet, float delay_ms, bool invoke_event);
 
     void print_packet_info_outgoing(ENetPacket* packet);
 
@@ -77,31 +79,31 @@ private:
     void create_host();
 
 private:
-    std::shared_ptr<BS::thread_pool> m_thread_pool;
+    std::shared_ptr<BS::thread_pool> m_thread_pool {};
     // refers to the client that is interfacing directly with the growtopia server.
-    std::unique_ptr<client::Client> m_client;
+    std::unique_ptr<client::Client> m_client {};
     // gt client refers to the actual gt client that is connected to the server
-    std::shared_ptr<peer::Peer> m_gt_peer;
+    std::shared_ptr<peer::Peer> m_gt_peer {};
 
     bool m_running {};
 
-    Config m_config;
+    Config m_config {};
     ENetHost* m_enet_host {};
 
-    moodycamel::ConcurrentQueue<packetInfoStruct> m_delayed_packet_primary_queue;
-    moodycamel::ConcurrentQueue<packetInfoStruct> m_delayed_packet_secondary_queue;
+    moodycamel::ConcurrentQueue<packetInfoStruct> m_delayed_packet_primary_queue {};
+    moodycamel::ConcurrentQueue<packetInfoStruct> m_delayed_packet_secondary_queue {};
 
     module::ModuleManager m_module_manager {};
 
-    utils::EventManager<std::shared_ptr<peer::Peer>> m_on_connect_callbacks;
-    utils::EventManager<std::shared_ptr<peer::Peer>> m_on_disconnect_callbacks;
+    utils::EventManager<std::shared_ptr<peer::Peer>> m_on_connect_callbacks {};
+    utils::EventManager<std::shared_ptr<peer::Peer>> m_on_disconnect_callbacks {};
 
     utils::EventManager<ENetPacket* /* packet */,
                         std::shared_ptr<peer::Peer> /* peer */,
-                        bool* /* forward packet */> m_on_outgoing_packet;
+                        bool* /* forward packet */> m_on_outgoing_packet {};
 
     utils::EventManager<packet::GameUpdatePacket* /*packet*/,
                         std::shared_ptr<peer::Peer> /* gt_peer*/,
-                        bool* /* forward packet */> m_on_outgoing_tank_packet;
+                        bool* /* forward packet */> m_on_outgoing_tank_packet {};
 };
 }

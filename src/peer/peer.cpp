@@ -43,10 +43,6 @@ int Peer::send_enet_packet(ENetPacket* packet, bool destroy_packet)
     int ret = enet_peer_send(m_peer, 0, packet);
     send_lock.unlock();
 
-    if (destroy_packet) {
-        enet_packet_destroy(packet);
-    }
-
     return ret;
 }
 

@@ -37,7 +37,7 @@ private:
     void on_proxy_client_disconnect(std::shared_ptr<peer::Peer> gt_server_peer);
 
     // from the gt client
-    void on_receive_login_packet_hook(ENetPacket* packet, std::shared_ptr<peer::Peer> gt_peer, bool* fw_packet);
+    void on_outgoing_text_packet(ENetPacket* packet, std::shared_ptr<peer::Peer> gt_peer, bool* fw_packet);
 
     void on_receive_redirect_packet_hook(
             VariantList* varlist,
@@ -52,5 +52,6 @@ private:
     std::string m_gt_server_ip, m_gt_server_port;
     bool m_use_new_packet {};
     utils::TextParse m_login_data;
+    utils::LoginData m_current_spoofed_login_data;
 };
 }

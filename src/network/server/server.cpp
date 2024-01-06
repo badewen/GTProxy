@@ -7,6 +7,13 @@
 
 using namespace server;
 
+Server::Server() :
+    m_client { std::make_unique<client::Client>() },
+    m_thread_pool { std::make_shared<BS::thread_pool>() }
+{
+
+}
+
 bool Server::init(Config conf) {
     m_config = std::move(conf);
 
@@ -23,6 +30,7 @@ bool Server::start() {
     m_module_manager.enable_module("ConnectionHandler_Module");
     m_module_manager.enable_module("WhiteSkinFix_Module");
     m_module_manager.enable_module("WorldHandler_Module");
+    m_module_manager.enable_module("NetAvatarHandler_Module");
 
     m_thread_pool->push_task(&client::Client::start, m_client.get());
     m_thread_pool->push_task(&server::Server::server_thread, this);
@@ -50,6 +58,7 @@ void Server::stop() {
     m_on_outgoing_tank_packet.RemoveAll();
 
     enet_host_destroy(m_enet_host);
+    m_enet_host = nullptr;
 }
 
 void Server::on_connect(ENetPeer *peer) {
@@ -84,9 +93,10 @@ void Server::on_disconnect(ENetPeer *peer) {
 }
 
 void Server::server_thread() {
+    ENetEvent event{};
+
     while (m_running) {
-        ENetEvent event{};
-        while (enet_host_service(m_enet_host, &event, 1)) {
+        while (m_enet_host && enet_host_service(m_enet_host, &event, 1) > 0) {
             switch (event.type) {
                 case ENET_EVENT_TYPE_CONNECT: {
                     on_connect(event.peer);
@@ -101,7 +111,6 @@ void Server::server_thread() {
                     break;
                 }
             }
-            enet_packet_destroy(event.packet);
         }
     }
 }
@@ -111,9 +120,10 @@ void Server::create_host() {
     addr.host = ENET_HOST_ANY;
     addr.port = m_config.Host.port;
 
-    m_enet_host = enet_host_create(&addr, 1, 1, 0, 0);
+    m_enet_host = enet_host_create(&addr, 1, 0, 0, 0);
 
-    enet_host_compress_with_range_coder(m_enet_host);
+    assert(m_enet_host && "ENET HOST IS NULL");
+    assert(!enet_host_compress_with_range_coder(m_enet_host) && "ENET HOST COMPRESS WITH RANGE CODER FAILED");
 
     m_enet_host->checksum = enet_crc32;
     m_enet_host->usingNewPacketForServer = true;
@@ -192,3 +202,5 @@ void Server::process_delayed_packet_thread() {
         std::swap(m_delayed_packet_primary_queue, m_delayed_packet_secondary_queue);
     }
 }
+
+

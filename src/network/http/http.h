@@ -14,6 +14,8 @@ public:
     static bool listen(const std::string& host, int port);
     static void stop();
 
+    static void update_config(Config* conf) { Http::s_config = conf; }
+
 private:
     static void listen_internal();
 

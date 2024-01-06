@@ -48,7 +48,7 @@ void WhiteSkinFixModule::on_incoming_raw_packet_hook(
     }
 
     if (tank_packet->type == packet::PACKET_SET_CHARACTER_STATE) {
-        m_proxy_server->send_to_gt_client_delayed(packet::create_raw_packet(tank_packet), 300);
+        m_proxy_server->send_to_gt_client_delayed(packet::create_raw_packet(tank_packet), 300, false);
         *fw_packet = false;
     }
 
@@ -74,7 +74,7 @@ void WhiteSkinFixModule::on_varlist_hook(
                         *varlist,
                         netid,
                         ENET_PACKET_FLAG_RELIABLE
-                    ), 250
+                    ), 250, false
             );
             *fw_packet = false;
             break;
@@ -85,7 +85,7 @@ void WhiteSkinFixModule::on_varlist_hook(
                             *varlist,
                             netid,
                             ENET_PACKET_FLAG_RELIABLE
-                    ), 320
+                    ), 320, false
             );
             *fw_packet = false;
             break;
@@ -96,7 +96,7 @@ void WhiteSkinFixModule::on_varlist_hook(
                             *varlist,
                             netid,
                             ENET_PACKET_FLAG_RELIABLE
-                    ), 321
+                    ), 321, false
             );
             *fw_packet = false;
             m_execute_once_on_world_enter = false;

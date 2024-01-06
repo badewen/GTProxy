@@ -54,25 +54,28 @@ int main()
     }
 
     server::Http::init();
+    server::Http::update_config(&conf);
     if (!server::Http::listen("0.0.0.0", 443)) {
         spdlog::error("Failed to bind http server. port : 443");
         return 1;
     }
 
-    if (!enet_initialize()) {
+    if (enet_initialize() != 0) {
         spdlog::error("Failed to initialize ENet server.");
         return 1;
     }
 
-    auto server{ std::make_unique<server::Server>() };
-    server->init(conf);
-    if (!server->start()) {
+    server::Server server {};
+    server.init(conf);
+    if (!server.start()) {
         return 1;
     }
 
-    while (server.get()) { // Just to avoid compiler warning.
+    while (server.is_running()) { // Just to avoid compiler warning.
         std::this_thread::sleep_for(std::chrono::milliseconds{ 100 });
     }
+
+    enet_deinitialize();
 
     return 0;
 }

@@ -6,12 +6,14 @@
 #include "modules/necessary/world_handler_module.h"
 #include "modules/necessary/white_skin_fix_module.h"
 #include "modules/necessary/connection_handler_module.h"
+#include "modules/necessary/net_avatar_handler_module.h"
 
 using namespace module;
 
 ModuleManager::ModuleManager() {
     m_proxy_server = nullptr;
 
+    m_modules.push_back(std::move(std::make_shared<modules::NetAvatarHandlerModule>(nullptr)));
     m_modules.push_back(std::move(std::make_shared<modules::WorldHandlerModule>(nullptr)));
     m_modules.push_back(std::move(std::make_shared<modules::WhiteSkinFixModule>(nullptr)));
     m_modules.push_back(std::move(std::make_shared<modules::ConnectionHandlerModule>(nullptr)));

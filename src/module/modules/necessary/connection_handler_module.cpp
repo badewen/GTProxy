@@ -75,8 +75,10 @@ void ConnectionHandlerModule::on_gt_client_connect(std::shared_ptr<peer::Peer> g
 void ConnectionHandlerModule::on_gt_client_disconnect(std::shared_ptr<peer::Peer> gt_peer) {
     spdlog::info("The client is disconnected from the proxy.");
 
-    if (m_proxy_server->get_client()->get_server_peer()->is_connected()) {
-        m_proxy_server->get_client()->get_server_peer()->disconnect();
+    if (m_proxy_server->get_client()->get_server_peer()) {
+        if (m_proxy_server->get_client()->get_server_peer()->is_connected()) {
+            m_proxy_server->get_client()->get_server_peer()->disconnect();
+        }
     }
 }
 
@@ -90,8 +92,10 @@ void ConnectionHandlerModule::on_proxy_client_connect(std::shared_ptr<peer::Peer
 void ConnectionHandlerModule::on_proxy_client_disconnect(std::shared_ptr<peer::Peer> gt_server_peer) {
     spdlog::info("Disconnected from Growtopia server.");
 
-    if (m_proxy_server->get_gt_peer()->is_connected()) {
-        m_proxy_server->get_gt_peer()->disconnect();
+    if (m_proxy_server->get_gt_peer()) {
+        if (m_proxy_server->get_gt_peer()->is_connected()) {
+            m_proxy_server->get_gt_peer()->disconnect();
+        }
     }
 
     m_login_data = {};
@@ -175,8 +179,6 @@ void ConnectionHandlerModule::on_outgoing_text_packet(
             );
 
             m_current_gt_client_meta = login_parse.get("meta", 1);
-
-            m_login_data = login_parse;
 
             auto http_data = server::Http::ServerDataCache.find(m_current_gt_client_meta);
 

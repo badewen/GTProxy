@@ -81,7 +81,7 @@ void Server::on_receive(ENetPeer *peer, ENetPacket *packet) {
         }
     }
 
-    if (forward_packet) {
+    if (forward_packet && m_client->get_server_peer()) {
         m_client->send_to_gt_server(packet, true);
     }
 }

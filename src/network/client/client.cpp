@@ -79,7 +79,7 @@ void Client::on_receive(ENetPeer *peer, ENetPacket *packet) {
         }
     }
 
-    if (forward_packet) {
+    if (forward_packet && m_proxy_server->get_gt_peer()) {
         m_proxy_server->send_to_gt_client(packet, true);
     }
 }

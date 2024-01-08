@@ -127,7 +127,7 @@ void Client::client_thread() {
 }
 
 void Client::create_host() {
-    m_enet_host = enet_host_create(nullptr, 1, 0, 0, 0);
+    m_enet_host = enet_host_create(nullptr, 2, 0, 0, 0);
 
     assert(!enet_host_compress_with_range_coder(m_enet_host) && "ENET HOST COMPRESS WITH RANGE CODER FAILED");
 

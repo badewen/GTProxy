@@ -71,19 +71,19 @@ void ConnectionHandlerModule::on_disable() {
 void ConnectionHandlerModule::on_gt_client_connect(std::shared_ptr<peer::Peer> gt_peer) {
     spdlog::info("A new client is connected to the proxy");
 
+//    if (m_proxy_server->get_client()->get_server_peer()) {
+//        if (m_proxy_server->get_client()->get_server_peer()->is_connected()) {
+//            spdlog::warn("A DANGLING CONNECTION IS DETECTED, DISCONNECTING IT IMMEDIATELY...");
+//            m_proxy_server->get_client()->get_server_peer()->disconnect_now();
+//        }
+//    }
+
     m_proxy_server->send_to_gt_client( packet::create_packet(
             packet::ePacketType::NET_MESSAGE_SERVER_HELLO,
             std::vector<uint8_t>{0}
         ), false
     );
     spdlog::debug("SENT SERVER HELLO PACKET");
-
-    if (m_proxy_server->get_client()->get_server_peer()) {
-        if (!m_proxy_server->get_client()->get_server_peer()->is_connected()) {
-            spdlog::warn("A DANGLING CONNECTION IS DETECTED, DISCONNECTING IT...");
-            m_proxy_server->get_client()->get_server_peer()->disconnect();
-        }
-    }
 }
 
 void ConnectionHandlerModule::on_gt_client_disconnect(std::shared_ptr<peer::Peer> gt_peer) {
@@ -91,6 +91,8 @@ void ConnectionHandlerModule::on_gt_client_disconnect(std::shared_ptr<peer::Peer
 
     if (m_proxy_server->get_client()->get_server_peer()) {
         if (m_proxy_server->get_client()->get_server_peer()->is_connected()) {
+            spdlog::debug("disconnecting the client from gt server, disconnecting immediately");
+            // TODO : REPLACE IT WITH PROPER DISCONNECT FUNCTION !!
             m_proxy_server->get_client()->get_server_peer()->disconnect();
         }
     }
@@ -102,12 +104,12 @@ void ConnectionHandlerModule::on_proxy_client_connect(std::shared_ptr<peer::Peer
                  m_gt_server_port
     );
 
-    if (m_proxy_server->get_gt_peer()) {
-        if (!m_proxy_server->get_gt_peer()->is_connected()) {
-            spdlog::warn("ORPHAN CONNECTION TO THE GT SERVER. DISCONNECTING NOW.");
-            gt_server_peer->disconnect();
-        }
-    }
+//    if (m_proxy_server->get_gt_peer()) {
+//        if (!m_proxy_server->get_gt_peer()->is_connected()) {
+//            spdlog::warn("ORPHAN CONNECTION TO THE GT SERVER. DISCONNECTING NOW.");
+//            gt_server_peer->disconnect();
+//        }
+//    }
 }
 
 void ConnectionHandlerModule::on_proxy_client_disconnect(std::shared_ptr<peer::Peer> gt_server_peer) {
@@ -216,6 +218,7 @@ void ConnectionHandlerModule::on_outgoing_text_packet(
             enet_address_set_host_ip(&addr, m_gt_server_ip.c_str());
             addr.port = std::stoi(m_gt_server_port);
 
+            spdlog::info("Connecting to the Growtopia server");
             m_proxy_server->get_client()->connect(addr, m_use_new_packet);
 
             *fw_packet = false;

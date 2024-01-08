@@ -44,10 +44,20 @@ std::vector<uint8_t> packet::get_extended_data(GameUpdatePacket* game_update_pac
         return {};
     }
 
-    return { (uint8_t*)(((uintptr_t)game_update_packet) + sizeof(GameUpdatePacket)),
-             (uint8_t*)(((uintptr_t)game_update_packet) + sizeof(GameUpdatePacket) + game_update_packet->extended_data_length - 1)
+    struct ExtendedPacket {
+        std::uint8_t pad[sizeof(GameUpdatePacket)];
+        std::uint32_t data;
     };
+
+    uint8_t* raw_data = reinterpret_cast<std::uint8_t*>(&reinterpret_cast<ExtendedPacket*>(game_update_packet)->data);
+
+    std::vector<uint8_t> vectored_data {};
+    vectored_data.resize(game_update_packet->extended_data_length);
+    memcpy(vectored_data.data(), raw_data, game_update_packet->extended_data_length);
+
+    return vectored_data;
 }
+
 
 VariantList packet::get_varlist(GameUpdatePacket* game_update_packet)
 {

@@ -38,6 +38,7 @@ private:
 
     // from the gt client
     void on_outgoing_text_packet(ENetPacket* packet, std::shared_ptr<peer::Peer> gt_peer, bool* fw_packet);
+    void on_outgoing_tank_packet(packet::GameUpdatePacket* tank_packet, std::shared_ptr<peer::Peer> gt_peer, bool* fw_pkt);
 
     void on_receive_redirect_packet_hook(
             VariantList* varlist,

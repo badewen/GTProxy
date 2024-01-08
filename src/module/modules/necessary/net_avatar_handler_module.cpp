@@ -33,15 +33,15 @@ void NetAvatarHandlerModule::on_varlist_hook(
 void NetAvatarHandlerModule::on_spawn(VariantList *varlist) {
     utils::TextParse parsed {varlist->Get(1).GetString()};
     if (parsed.get("type", 1) == "local") {
-        m_current_net_avatar->NetID = parsed.get<int32_t>("netID", 1);
-        m_current_net_avatar->PlayerName = parsed.get("name", 1);
-        m_current_net_avatar->UserID = parsed.get<int32_t>("userID", 1);
+        m_current_net_avatar.NetID = parsed.get<int32_t>("netID", 1);
+        m_current_net_avatar.PlayerName = parsed.get("name", 1);
+        m_current_net_avatar.UserID = parsed.get<int32_t>("userID", 1);
     }
 }
 
 void NetAvatarHandlerModule::on_remove(VariantList *varlist) {
     utils::TextParse parsed {varlist->Get(1).GetString()};
-    if (parsed.get<int32_t>("netID", 1) == m_current_net_avatar->NetID) {
+    if (parsed.get<int32_t>("netID", 1) == m_current_net_avatar.NetID) {
         m_current_net_avatar = {};
     }
 }

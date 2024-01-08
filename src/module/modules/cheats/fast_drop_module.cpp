@@ -24,7 +24,7 @@ void FastDropModule::drop_dialog_blocker(
                 packet::ePacketType::NET_MESSAGE_GENERIC_TEXT,
                 resp.build()
             ),
-            200
+            200, false
         );
 
         *forward_packet = false;

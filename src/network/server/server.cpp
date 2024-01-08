@@ -1,15 +1,17 @@
 #include "server.h"
 
 #include <utility>
+#include <chrono>
 
 #include "enet/include/enet/enet.h"
 #include <magic_enum.hpp>
 
 using namespace server;
+using namespace std::chrono_literals;
 
 Server::Server() :
     m_client { std::make_unique<client::Client>() },
-    m_thread_pool { std::make_shared<BS::thread_pool>() }
+    m_thread_pool { std::make_shared<BS::thread_pool>(4) }
 {
 
 }
@@ -75,14 +77,18 @@ void Server::on_receive(ENetPeer *peer, ENetPacket *packet) {
     switch (packet_type) {
         case packet::ePacketType::NET_MESSAGE_GAME_PACKET: {
             m_on_outgoing_tank_packet.Invoke(packet::get_tank_packet(packet), m_gt_peer, &forward_packet);
+            break;
         }
         default: {
             m_on_outgoing_packet.Invoke(packet, m_gt_peer, &forward_packet);
+            break;
         }
     }
 
     if (forward_packet && m_client->get_server_peer()) {
-        m_client->send_to_gt_server(packet, true);
+        if (m_client->get_server_peer()->is_connected()) {
+            m_client->send_to_gt_server(packet, false);
+        }
     }
 }
 
@@ -110,6 +116,8 @@ void Server::server_thread() {
                     on_receive(event.peer, event.packet);
                     break;
                 }
+                default:
+                    break;
             }
         }
     }
@@ -157,9 +165,11 @@ void Server::outgoing_packet_events_invoke(ENetPacket *packet, bool *forward_pac
     switch (packet_type) {
         case packet::ePacketType::NET_MESSAGE_GAME_PACKET: {
             m_on_outgoing_tank_packet.Invoke(packet::get_tank_packet(packet), m_gt_peer, forward_packet);
+            return;
         }
         default: {
             m_on_outgoing_packet.Invoke(packet, m_gt_peer, forward_packet);
+            return;
         }
     }
 }
@@ -176,6 +186,7 @@ void Server::print_packet_info_outgoing(ENetPacket *packet) {
                          static_cast<int32_t>(tank_pkt->type),
                          tank_pkt->net_id
             );
+            return;
         }
         default: {
             spdlog::info("Outgoing {}[{}] packet \n{}",
@@ -183,6 +194,7 @@ void Server::print_packet_info_outgoing(ENetPacket *packet) {
                          static_cast<int32_t>(packet_type),
                          packet::get_text(packet)
             );
+            return;
         }
     }
 }
@@ -200,6 +212,7 @@ void Server::process_delayed_packet_thread() {
             }
         }
         std::swap(m_delayed_packet_primary_queue, m_delayed_packet_secondary_queue);
+        std::this_thread::sleep_for(1ms);
     }
 }
 

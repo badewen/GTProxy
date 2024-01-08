@@ -49,6 +49,12 @@ void ConnectionHandlerModule::on_enable() {
             &ConnectionHandlerModule::on_outgoing_text_packet,
             this
     );
+
+    m_proxy_server->add_on_outgoing_tank_packet_callback(
+            "ConnectionHandler_Module",
+            &ConnectionHandlerModule::on_outgoing_tank_packet,
+            this
+    );
 }
 
 void ConnectionHandlerModule::on_disable() {
@@ -59,6 +65,7 @@ void ConnectionHandlerModule::on_disable() {
     m_proxy_server->get_client()->remove_on_incoming_packet_callback("ConnectionHandler_Module");
     m_proxy_server->get_client()->remove_on_incoming_varlist_packet_callback("ConnectionHandler_Module");
     m_proxy_server->remove_on_outgoing_packet_callback("ConnectionHandler_Module");
+    m_proxy_server->remove_on_outgoing_tank_packet_callback("ConnectionHandler_Module");
 }
 
 void ConnectionHandlerModule::on_gt_client_connect(std::shared_ptr<peer::Peer> gt_peer) {
@@ -70,6 +77,13 @@ void ConnectionHandlerModule::on_gt_client_connect(std::shared_ptr<peer::Peer> g
         ), false
     );
     spdlog::debug("SENT SERVER HELLO PACKET");
+
+    if (m_proxy_server->get_client()->get_server_peer()) {
+        if (!m_proxy_server->get_client()->get_server_peer()->is_connected()) {
+            spdlog::warn("A DANGLING CONNECTION IS DETECTED, DISCONNECTING IT...");
+            m_proxy_server->get_client()->get_server_peer()->disconnect();
+        }
+    }
 }
 
 void ConnectionHandlerModule::on_gt_client_disconnect(std::shared_ptr<peer::Peer> gt_peer) {
@@ -87,6 +101,13 @@ void ConnectionHandlerModule::on_proxy_client_connect(std::shared_ptr<peer::Peer
                  m_gt_server_ip,
                  m_gt_server_port
     );
+
+    if (m_proxy_server->get_gt_peer()) {
+        if (!m_proxy_server->get_gt_peer()->is_connected()) {
+            spdlog::warn("ORPHAN CONNECTION TO THE GT SERVER. DISCONNECTING NOW.");
+            gt_server_peer->disconnect();
+        }
+    }
 }
 
 void ConnectionHandlerModule::on_proxy_client_disconnect(std::shared_ptr<peer::Peer> gt_server_peer) {
@@ -202,6 +223,20 @@ void ConnectionHandlerModule::on_outgoing_text_packet(
     }
 }
 
+void ConnectionHandlerModule::on_outgoing_tank_packet(
+        packet::GameUpdatePacket *tank_packet,
+        std::shared_ptr<peer::Peer> gt_peer,
+        bool *fw_pkt
+) {
+    if (tank_packet->type == packet::eTankPacketType::PACKET_DISCONNECT) {
+        if (m_proxy_server->get_gt_peer()) {
+            if (m_proxy_server->get_gt_peer()->is_connected()) {
+                m_proxy_server->get_gt_peer()->disconnect();
+            }
+        }
+    }
+}
+
 void ConnectionHandlerModule::on_receive_redirect_packet_hook(
         VariantList *varlist,
         int32_t net_id,
@@ -212,7 +247,7 @@ void ConnectionHandlerModule::on_receive_redirect_packet_hook(
         std::vector<std::string> tokenized_data = utils::TextParse::string_tokenize(varlist->Get(4).GetString());
 
         m_gt_server_ip = tokenized_data.at(0);
-        m_gt_server_port = varlist->Get(1).GetString();
+        m_gt_server_port = std::to_string(varlist->Get(1).GetINT32());
 
         varlist->Get(1).Set(m_proxy_server->get_config()->Host.port);
         varlist->Get(4).Set(

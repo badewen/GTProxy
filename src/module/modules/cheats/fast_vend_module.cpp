@@ -64,7 +64,7 @@ void FastVendModule::on_dialog_hook(
                 packet::ePacketType::NET_MESSAGE_GENERIC_TEXT,
                 dialog_response.build()
             ),
-            50
+            50, false
     );
 }
 

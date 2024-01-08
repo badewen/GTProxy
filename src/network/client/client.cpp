@@ -1,16 +1,18 @@
 #include "client.h"
 
 #include <utility>
+#include <chrono>
 
 #include "../server/server.h"
 #include "enet/include/enet/enet.h"
 #include <magic_enum.hpp>
 
 using namespace client;
+using namespace std::chrono_literals;
 
 bool Client::init(server::Server* proxy_server, std::shared_ptr<BS::thread_pool> thread_pool) {
     m_proxy_server = proxy_server;
-    m_thread_pool = thread_pool;
+    m_thread_pool = std::move(thread_pool);
 
     return true;
 }
@@ -29,7 +31,7 @@ bool Client::start() {
 bool Client::connect(ENetAddress addr, bool use_new_packet) {
     m_enet_host->usingNewPacket = use_new_packet;
 
-    return enet_host_connect(m_enet_host, &addr, 1, NULL, m_proxy_server->get_gt_peer()->get_connect_id());
+    return enet_host_connect(m_enet_host, &addr, 2, 0, m_proxy_server->get_gt_peer()->get_connect_id());
 }
 
 void Client::stop() {
@@ -48,6 +50,7 @@ void Client::stop() {
     m_on_incoming_tank_packet.RemoveAll();
 
     enet_host_destroy(m_enet_host);
+    m_enet_host = nullptr;
 }
 
 void Client::on_connect(ENetPeer *peer) {
@@ -70,17 +73,22 @@ void Client::on_receive(ENetPeer *peer, ENetPacket *packet) {
                 varlist.SerializeFromMem(ext_data.data(), ext_data.size());
 
                 m_on_incoming_varlist_packet.Invoke(&varlist, packet::get_tank_packet(packet)->net_id, m_gt_server_peer, &forward_packet);
+                break;
             }
 
             m_on_incoming_tank_packet.Invoke(packet::get_tank_packet(packet), m_gt_server_peer, &forward_packet);
+            break;
         }
         default: {
             m_on_incoming_packet.Invoke(packet, m_gt_server_peer, &forward_packet);
+            break;
         }
     }
 
     if (forward_packet && m_proxy_server->get_gt_peer()) {
-        m_proxy_server->send_to_gt_client(packet, true);
+        if (m_proxy_server->get_gt_peer()->is_connected()) {
+            m_proxy_server->send_to_gt_client(packet, false);
+        }
     }
 }
 
@@ -91,9 +99,13 @@ void Client::on_disconnect(ENetPeer *peer) {
 }
 
 void Client::client_thread() {
+    ENetEvent event{};
+
     while (m_running) {
-        ENetEvent event{};
-        while (enet_host_service(m_enet_host, &event, 1)) {
+        // enet host service timeout not properly sleeping smh.
+        // this hack fixed it
+//        std::this_thread::sleep_for(1ms);
+        while (m_enet_host && enet_host_service(m_enet_host, &event, 1) > 0) {
             switch (event.type) {
                 case ENET_EVENT_TYPE_CONNECT: {
                     on_connect(event.peer);
@@ -107,18 +119,19 @@ void Client::client_thread() {
                     on_receive(event.peer, event.packet);
                     break;
                 }
+                default:
+                    break;
             }
         }
     }
 }
 
 void Client::create_host() {
-    m_enet_host = enet_host_create(NULL, 1, 1, 0, 0);
+    m_enet_host = enet_host_create(nullptr, 1, 0, 0, 0);
 
-    enet_host_compress_with_range_coder(m_enet_host);
+    assert(!enet_host_compress_with_range_coder(m_enet_host) && "ENET HOST COMPRESS WITH RANGE CODER FAILED");
 
     m_enet_host->checksum = enet_crc32;
-    m_enet_host->usingNewPacket = true;
 }
 
 void Client::send_to_gt_server(ENetPacket *packet, bool invoke_event) {
@@ -155,12 +168,15 @@ void Client::incoming_packet_events_invoke(ENetPacket *packet, bool *forward_pac
                 varlist.SerializeFromMem(packet::get_extended_data(tank_pkt).data(), tank_pkt->extended_data_length);
 
                 m_on_incoming_varlist_packet.Invoke(&varlist, tank_pkt->net_id, m_gt_server_peer, forward_packet);
+                return;
             }
 
             m_on_incoming_tank_packet.Invoke(packet::get_tank_packet(packet), m_gt_server_peer, forward_packet);
+            return;
         }
         default: {
             m_on_incoming_packet.Invoke(packet, m_gt_server_peer, forward_packet);
+            return;
         }
     }
 
@@ -181,6 +197,7 @@ void Client::print_packet_info_incoming(ENetPacket *packet) {
                              tank_pkt->net_id,
                              varlist.GetContentsAsDebugString()
                              );
+                return;
             }
 
             spdlog::info("Incoming {}[{}] TankPacket with netid {}",
@@ -188,6 +205,7 @@ void Client::print_packet_info_incoming(ENetPacket *packet) {
                          static_cast<int32_t>(tank_pkt->type),
                          tank_pkt->net_id
             );
+            return;
         }
         default: {
             spdlog::info("Incoming {}[{}] packet \n{}",
@@ -212,5 +230,7 @@ void Client::process_delayed_packet_thread() {
             }
         }
         std::swap(m_delayed_packet_primary_queue, m_delayed_packet_secondary_queue);
+
+        std::this_thread::sleep_for(1ms);
     }
 }

@@ -23,10 +23,11 @@ public:
     int send_variant(VariantList variant_list, std::int32_t net_id = -1, enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE);
 
 public:
+    // should be pretty bulletproof check now
     [[nodiscard]] bool is_connected() const { return m_peer->state == ENET_PEER_STATE_CONNECTED; }
     enet_uint32 get_connect_id() const { return m_peer->connectID; }
-    void disconnect() { m_peer ? enet_peer_disconnect(m_peer, 0) : (void)0; m_peer = nullptr; }
-    void disconnect_now() { m_peer ? enet_peer_disconnect_now(m_peer, 0) : (void)0; m_peer = nullptr; }
+    void disconnect() { enet_peer_disconnect(m_peer, 0); }
+    void disconnect_now() {  enet_peer_disconnect_now(m_peer, 0); }
     ENetPeer* get_raw_peer() const { return m_peer; }
 
 private:

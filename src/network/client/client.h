@@ -30,13 +30,13 @@ public:
     void on_receive(ENetPeer* peer, ENetPacket* packet);
     void on_disconnect(ENetPeer* peer);
 
-    peer::Peer* get_server_peer() { return m_gt_server_peer.get(); }
+    std::shared_ptr<peer::Peer> get_server_peer() { return m_gt_server_peer; }
     server::Server* get_server() { return m_proxy_server; }
 
     void incoming_packet_events_invoke(ENetPacket* packet, bool* forward_packet);
 
-    void send_to_gt_server(ENetPacket* packet, bool invoke_event = true);
-    void send_to_gt_server_delayed(ENetPacket* packet, float delay_ms, bool invoke_event = true);
+    void send_to_gt_server(ENetPacket* packet, bool invoke_event);
+    void send_to_gt_server_delayed(ENetPacket* packet, float delay_ms, bool invoke_event);
 
     void print_packet_info_incoming(ENetPacket* packet);
 
@@ -93,11 +93,11 @@ private:
     std::shared_ptr<peer::Peer> m_gt_server_peer;
     ENetHost* m_enet_host {};
 
-    moodycamel::ConcurrentQueue<packetInfoStruct> m_delayed_packet_primary_queue;
-    moodycamel::ConcurrentQueue<packetInfoStruct> m_delayed_packet_secondary_queue;
+    moodycamel::ConcurrentQueue<packetInfoStruct> m_delayed_packet_primary_queue {};
+    moodycamel::ConcurrentQueue<packetInfoStruct> m_delayed_packet_secondary_queue {};
 
-    utils::EventManager<std::shared_ptr<peer::Peer /* gt_server_peer */>> m_on_connect_callbacks;
-    utils::EventManager<std::shared_ptr<peer::Peer /* gt_server_peer */>> m_on_disconnect_callbacks;
+    utils::EventManager<std::shared_ptr<peer::Peer /* gt_server_peer */>> m_on_connect_callbacks {};
+    utils::EventManager<std::shared_ptr<peer::Peer /* gt_server_peer */>> m_on_disconnect_callbacks {};
 
     utils::EventManager<ENetPacket* /* packet */,
             std::shared_ptr<peer::Peer> /* gt_server_peer */,
